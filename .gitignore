@@ -20,3 +20,6 @@ desktop/release/
 desktop/smoke-shots/
 desktop/electron-zips/
 desktop/.eb-cache/
+
+# Libro di McKee (copia personale, non va nel repository)
+*.epub

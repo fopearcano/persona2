@@ -24,6 +24,8 @@ const sharedSource = {
   name: 'persona-shared-source',
   setup(b) {
     b.onResolve({ filter: /^@persona\/shared$/ }, () => ({ path: join(root, 'shared', 'src', 'index.ts') }));
+    // Modulo McKee (PERSONA 2): costruzione, tappe, analisi.
+    b.onResolve({ filter: /^@persona\/shared\/mckee$/ }, () => ({ path: join(root, 'shared', 'src', 'mckee', 'index.ts') }));
   },
 };
 

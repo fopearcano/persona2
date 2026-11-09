@@ -199,7 +199,7 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
   app.put<{ Params: Params }>('/api/characters/:id/build', async (req) => characters.saveBuild(ctx, req.params.id, req.body));
   /** Orbita e posizione sul cast map. */
   app.put<{ Params: Params }>('/api/characters/:id/cast', async (req) =>
-    characters.setCastPlacement(ctx, req.params.id, req.body, 'Cast map'),
+    characters.setCastPlacement(ctx, req.params.id, req.body, 'Mappa del cast'),
   );
   /** Storia di riferimento e cast per il costruttore (`?projectId=`). */
   app.get<{ Params: Params; Querystring: Q }>('/api/characters/:id/build-context', async (req) =>

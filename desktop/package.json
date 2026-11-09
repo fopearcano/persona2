@@ -1,6 +1,6 @@
 {
   "name": "@persona/desktop",
-  "version": "0.4.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "PERSONA — applicazione desktop (Electron) che avvia il backend locale in-process",
@@ -32,7 +32,7 @@
     "name": "fopearcano",
     "email": "fopearcano@users.noreply.github.com"
   },
-  "homepage": "https://github.com/fopearcano/persona",
+  "homepage": "https://github.com/fopearcano/persona2",
   "license": "UNLICENSED",
   "desktopName": "persona.desktop"
 }

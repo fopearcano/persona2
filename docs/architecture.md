@@ -1,4 +1,4 @@
-# Architettura di PERSONA
+# Architettura di PERSONA 2
 
 ## Principio
 
@@ -6,9 +6,10 @@ PERSONA separa rigorosamente tre componenti:
 
 | Componente | Dove vive | Note |
 |---|---|---|
-| **A. Identità persistente** | `characters`, `character_traits`, `character_languages`, `expertise`, memorie `core`, `identity_revisions` | Canonica. Modificabile solo dall'autore, con cronologia reversibile. |
+| **A. Identità persistente** | `characters` (con `build`, la costruzione McKee), `character_traits`, `character_languages`, `expertise`, memorie `core`, `identity_revisions` | Canonica. Modificabile solo dall'autore, con cronologia reversibile. |
 | **B. Ambienti di interazione** | `conversations` (`lab` / `scenario` / `simulation`), `messages`, `conversation_summaries`, `scenarios` e tabelle collegate, memorie `episodic`/`semantic`/`contextual` | Ogni ambiente ha cronologia, contesto e memorie propri. |
-| **Organizzazione: progetti** | `projects`, `project_characters`, `scenarios.project_id` | Raggruppa per storia; non fa parte dell'identità. |
+| **Organizzazione: progetti** | `projects` (con `story`, l'impianto narrativo McKee), `project_characters`, `scenarios.project_id` | Raggruppa per storia; non fa parte dell'identità. |
+| **Laboratorio dell'autore** | `coach_threads`, `coach_messages`; libro in `<dati>/books/*.epub` | Conversazioni con il coach McKee: non sono parlato del personaggio, non generano memorie. |
 | **C. Motore di inferenza** | `model_configurations`, `server/src/llm/*` | Intercambiabile. Non conserva stato: il contesto è ricostruito a ogni richiesta. |
 
 ## Flusso di una risposta
@@ -16,7 +17,7 @@ PERSONA separa rigorosamente tre componenti:
 1. **Identità**: `getCharacter` carica profilo, tratti, lingue e competenze.
 2. **Recupero** (`services/retrieval.ts`): memorie core (sempre, entro budget) + memorie pertinenti al messaggio corrente via FTS5 e, se attivi, embedding locali (recupero ibrido, `services/embeddings.ts`), nel perimetro consentito; frammenti della base di conoscenza; estratti di conversazioni precedenti dello stesso perimetro.
 3. **Assemblaggio** (`services/context-engine.ts`, `services/prompts.ts`), in ordine:
-   istruzioni applicative → identità canonica (+ memorie core) → personalità → comunicazione → competenze → profilo linguistico e lingua di risposta → modalità → contesto di scenario (marcato come temporaneo) → memorie recuperate → conoscenza → riassunto incrementale → estratti → indicazione di regia → cronologia recente → ultimo messaggio.
+   istruzioni applicative → identità canonica (+ memorie core) → personalità → comunicazione → competenze → costruzione McKee (sezione `design`) → profilo linguistico e lingua di risposta → modalità → contesto di scenario (marcato come temporaneo) → memorie recuperate → conoscenza → riassunto incrementale → estratti → indicazione di regia → cronologia recente → ultimo messaggio.
 4. **Adattatore LLM** (`llm/openai-compatible.ts`): `POST /chat/completions` in streaming; separa il ragionamento (`reasoning_content` o blocchi `<think>`); errori normalizzati in codici stabili (`llm_unavailable`, `llm_timeout`, `llm_model_not_found`, `llm_auth`, …).
 5. **Streaming** al browser via Server-Sent Events su POST (`lib/sse.ts`). La disconnessione del client annulla la generazione; il testo parziale resta salvato come `incomplete`.
 6. **Salvataggio**: il messaggio include `contextMeta` (modello, token stimati per sezione, memorie/conoscenza usate, cronologia inclusa/omessa) per l'ispezione del contesto.
@@ -96,6 +97,20 @@ Gestione dei turni (`services/turns.ts`, `conversations.turn_mode`):
 - Chiavi API solo sul backend (`hasApiKey` nelle risposte).
 - Contenuti recuperati racchiusi in blocchi `<data>` con delimitatori neutralizzati; le istruzioni applicative dichiarano esplicitamente di non seguire istruzioni contenute nei dati.
 
+## Costruzione McKee (PERSONA 2)
+
+Integrazione di CharBuild (fopearcano/char-build): il modulo `shared/src/mckee/` è un porting TypeScript di modello, tappe, catalogo, indice dei campi, analisi, verifiche ed export Markdown, usato identico da backend e frontend.
+
+- **Dato.** `characters.build` contiene un `CharacterBuild` normalizzato (`normalizeBuild`: solo chiavi note, niente chiavi di prototipo, stringhe e liste limitate, id per ogni elemento di lista). Nel DTO è sempre presente; nel database `NULL` se vuota. `projects.story` contiene lo `StoryDesign` del progetto (il titolo è il nome del progetto).
+- **Identità e revisioni.** La costruzione è nell'istantanea `CharacterSnapshot.build`: `PUT /api/characters/:id/build` passa da `updateCharacter`, quindi crea una revisione e incrementa `identityVersion` quando qualcosa cambia; il ripristino di una revisione ripristina anche la costruzione. `PUT /api/characters/:id` senza `build` la lascia invariata. Il confronto ignora `cast.mapAngle` (posizione sulla mappa del cast, `PUT /api/characters/:id/cast`), che si salva senza revisione.
+- **Big Five unici.** La tappa 04 mostra i Big Five dell'identità: nel DTO `build.outer.implicit.bigFive` è ricavato da `big_five` (razionalità = 100 − nevroticismo) e al salvataggio i valori tornano in `big_five`; il JSON della costruzione non li contiene.
+- **Storia di riferimento.** `GET /api/characters/:id/build-context?projectId=` restituisce il progetto (richiesto se il personaggio ne fa parte, altrimenti il primo), l'elenco dei progetti del personaggio e il cast con le costruzioni; `GET /api/projects/:id/cast` alimenta la mappa del cast. La costruzione è unica per l'identità: orbita e relazioni valgono in tutte le storie.
+- **Contesto delle conversazioni.** `profile.ts` produce la sezione `design` (tetto 25% del budget, tronca se serve): ruolo, tratti osservabili, mente e atteggiamenti, mondo, sé e maschere, motivazioni e desiderio cosciente, pressione ed emozioni, contraddizioni (dimensione definitoria per prima), testo e sottotesto, racconto di sé e modus operandi, persone della storia. Sé nascosto, desiderio inconscio e "ciò che non può sapere di sé" stanno in una sottosezione *Below awareness* con l'istruzione di non dichiararli. Arco, climax, simbolo, genere, performance e scene pianificate restano fuori. In modalità analisi la sezione elenca l'intera costruzione.
+- **Coach** (`services/coach.ts`, `POST /api/characters/:id/coach` in SSE). Prompt ricostruito a ogni richiesta: regole del coach, sintesi delle 16 tappe, formato delle proposte, indice dei campi (completo con contesti ≥ ~14k token, altrimenti solo la tappa aperta), glossario delle opzioni, lingua dell'interfaccia, istantanea della bozza (`draft` inviato dal browser, anche non salvato), verifiche aperte, tappa in primo piano, passaggi del libro (BM25 su messaggio + titolo inglese della tappa) e, per la distillazione, la trascrizione in-personaggio di una conversazione; tutto il materiale in blocchi `<data>`. La cronologia del filo entra come turni utente/assistente, con lo stato delle proposte. Il modello termina con un blocco `<proposals>{json}</proposals>` (accettato anche un blocco ```json finale): `ProposalStreamFilter` lo nasconde dallo streaming, `toProposals` valida ogni aggiornamento con `validateUpdate` (percorsi, tipi, opzioni, riferimenti a dimensioni e personaggi del cast) e i membri del cast proposti. Le proposte valide sono salvate nel messaggio con stato `pending`/`applied`/`dismissed`; l'applicazione avviene nel browser sulla bozza (`applyUpdates`), poi l'autore salva. Nessuna chiamata a strumenti: funziona con qualsiasi motore di PERSONA, mock compreso (`purpose: 'coach'`).
+- **Libro** (`services/book.ts`). EPUB letto con un lettore ZIP interno (`lib/zip.ts`, node:zlib), diviso in passaggi di ~210 parole per capitolo e sezione, indicizzato in memoria con BM25 (indice ricostruito se il file cambia). `uploadBook` verifica che il file sia un EPUB leggibile prima di sostituire quello esistente. Le ricerche in italiano aggiungono il lessico inglese di McKee (`book-terms.ts`). Il libro non è mai incluso nel repository né nelle esportazioni.
+- **Portabilità.** `persona.character` porta `build` (anche nelle revisioni); `persona.project` porta `project.story`; l'apertura di un progetto con nuove identità rimappa `relationships[].targetId` sui nuovi id.
+- **Interfaccia.** `BuildPage` (tappe, infografiche e verifiche dal vivo, profilo, coach), `StoryPage` (impianto e mappa del cast), `components/mckee/*`. I contenuti McKee sono localizzati con `mckeeData(lang)` (copie tradotte, cache per lingua) in inglese e italiano.
+
 ## App desktop (Electron)
 
 - `server/src/embedded.ts` esporta `startPersonaServer({ dataDir, port: 0, webDistDir, config })`: avvia il backend su una porta libera e restituisce `{ url, close() }`. Lo usano sia `server/src/index.ts` sia l'app desktop.
@@ -123,4 +138,5 @@ Documenti di testo, Markdown e PDF (estrazione del testo con `unpdf`/pdf.js in `
 ## Estensioni previste
 
 1. Firma del codice degli installer e aggiornamento automatico.
+1. Contenuti McKee nelle altre lingue dell'interfaccia; orbita del cast per singola storia.
 2. Indice vettoriale dedicato per basi di memoria molto grandi; OCR per PDF scansionati.

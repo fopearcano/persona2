@@ -1,6 +1,6 @@
 {
   "name": "@persona/server",
-  "version": "0.4.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@fastify/static": "^10.1.10",
-    "@persona/shared": "0.4.0",
+    "@persona/shared": "2.0.0",
     "better-sqlite3": "^13.0.3",
     "cross-env": "^10.0.0",
     "drizzle-orm": "^0.45.4",

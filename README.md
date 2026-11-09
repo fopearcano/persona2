@@ -1,6 +1,8 @@
-# PERSONA
+# PERSONA 2
 
-**Laboratorio local-first di identità artificiali persistenti.**
+**Laboratorio local-first di identità artificiali persistenti, con la costruzione dei personaggi secondo McKee.**
+
+> **Novità della versione 2.** PERSONA integra il costruttore di personaggi [CharBuild](https://github.com/fopearcano/char-build): sedici *tappe* che seguono *Character: The Art of Role and Cast Design for Page, Stage, and Screen* di Robert McKee (2021), con infografiche dal vivo, «verifiche McKee», profilo, mappa del cast, impianto narrativo della storia, ricerca nella tua copia del libro e un **coach McKee**. La costruzione fa parte dell'identità del personaggio: viene salvata nella cronologia delle versioni e guida il modo in cui il personaggio parla e sceglie nelle conversazioni. Vedi [Costruzione McKee](#costruzione-mckee-novità-della-versione-2).
 
 PERSONA permette di creare, mantenere, interrogare e simulare personaggi che esistono indipendentemente da qualsiasi storia. Un'astrofisica creata oggi può discutere di cosmologia con l'autore per settimane, poi salire a bordo di una nave interstellare in uno scenario narrativo, e infine partecipare a un universo del tutto diverso, mantenendo la stessa identità di fondo.
 
@@ -28,8 +30,8 @@ Lo stile è personalizzabile in **Impostazioni → Stile**: tema chiaro o scuro,
 ## Installazione
 
 ```bash
-git clone <repository> persona
-cd persona
+git clone <repository> persona2
+cd persona2
 npm install
 ```
 
@@ -55,7 +57,7 @@ Apri **`http://127.0.0.1:4317`**: il backend serve sia le API sia l'interfaccia.
 
 ### Applicazione desktop (installer)
 
-Gli installer sono pubblicati nelle **[Releases](https://github.com/fopearcano/persona/releases)**: **Windows** (x64), **macOS Intel** (dmg; sui Mac Apple funziona tramite Rosetta 2) e **Linux** (AppImage e deb). Le istruzioni sono nelle note della release. Non sono firmati con un certificato di sviluppatore: al primo avvio Windows mostra un avviso di SmartScreen e macOS chiede di confermare l'apertura da *Impostazioni di Sistema → Privacy e sicurezza → Apri comunque*.
+Gli installer sono pubblicati nelle **[Releases](https://github.com/fopearcano/persona2/releases)**: **Windows** (x64), **macOS Intel** (dmg; sui Mac Apple funziona tramite Rosetta 2) e **Linux** (AppImage e deb). Le istruzioni sono nelle note della release. Non sono firmati con un certificato di sviluppatore: al primo avvio Windows mostra un avviso di SmartScreen e macOS chiede di confermare l'apertura da *Impostazioni di Sistema → Privacy e sicurezza → Apri comunque*.
 
 ### Applicazione desktop dai sorgenti (Electron)
 
@@ -103,10 +105,44 @@ Per ritrovare memorie e documenti **per significato**, anche tra lingue diverse 
 
 Il recupero diventa ibrido (lessicale FTS5 + similarità tra embedding, con peso regolabile). Le nuove memorie e i nuovi documenti vengono indicizzati in background. Se il servizio di embedding non risponde, PERSONA torna automaticamente al solo recupero lessicale e lo segnala nel pannello di ispezione del contesto.
 
+## Costruzione McKee (novità della versione 2)
+
+Ogni personaggio ha una **Costruzione McKee** (pulsante con il martello nell'elenco dei personaggi, nell'editor dell'identità oppure `/characters/<id>/build`). È il costruttore di CharBuild riscritto nello stile di PERSONA:
+
+| Tappa | McKee | Cosa costruisci |
+|---|---|---|
+| 01 La scintilla | Cap. 3–5 | Fonti d'ispirazione (le cinque sfere), il dettaglio rivelatore, il «se magico», dall'esterno o dall'interno, le quattro ricerche |
+| 02 Ruolo nel cast | Cap. 6 | Orbita (protagonista / primo, secondo, terzo cerchio), supporto o servizio, varianti di protagonista, gli 8 requisiti, il Centro del Bene, contraltare e narratore |
+| 03 Tratti espliciti | Cap. 7 | I 18 tratti osservabili; l'occhio segna quelli messi in scena, per misurare la **regola dei 3/10** |
+| 04 Tratti impliciti | Cap. 7 | Big Five (sono gli stessi dell'identità), intelligenze, atteggiamenti, le domande di McKee, umore e temperamento |
+| 05 Mondo ed espressione | Cap. 7 | Tempo e spazio, livelli di conflitto, ambientazioni, vincoli culturali, i 9 modi di esprimere la caratterizzazione |
+| 06 I quattro sé | Cap. 5 | Sé sociale, personale, nucleare e nascosto; le maschere secondo potere e intimità |
+| 07 Motivazione e desiderio | Cap. 8 | Le 12 motivazioni, l'incidente scatenante, il super-obiettivo, l'oggetto del desiderio |
+| 08 Scelta, pressione ed emozione | Cap. 8 | Il dilemma, rischio × libertà («profondità della scelta»), valori, emozioni, reazioni, decisioni |
+| 09 Dimensioni | Cap. 9 | Le contraddizioni, con tipo, livello del sé, un comportamento per polo e la **dimensione definitoria** |
+| 10 Antagonismo e profondità | Cap. 10 | Le forze antagoniste contro le sue capacità (la **bilancia della sfavorita**), il controdesiderio, i tratti di profondità, testo e sottotesto |
+| 11 Arco e completamento | Cap. 11 | Bisogno → rivelazione → cambiamento → completamento, punti di svolta da trascinare sul grafico |
+| 12 Simbolo e radicale | Cap. 12–13 | Archetipo, allegoria, tipo, figura di repertorio; il velo; personaggio × mondo |
+| 13 Il personaggio nel genere | Cap. 14 | La posizione nel cast centrale dei generi della storia |
+| 14 Il personaggio in azione | Cap. 15 | Il racconto di sé, il modus operandi, il costruttore di scene |
+| 15 Il personaggio in scena | Cap. 16 | Le 7 funzioni, scoperta e riconoscimento, suspense = curiosità × apprensione |
+| 16 Relazioni nel cast | Cap. 17 | I legami con il resto del cast e quale dimensione fa emergere ciascuno |
+
+- **Infografiche dal vivo** per ogni tappa (sfere dell'ispirazione, orbite del cast, tela dei tratti con il misuratore dei 3/10, radar della personalità, i quattro sé, la scala delle motivazioni, il calibro della scelta, la ruota delle dimensioni, la bilancia della sfavorita, il grafico dell'arco, la rete delle relazioni…) e **verifiche McKee** con il capitolo di riferimento («Nessun vero dilemma», «Non è sfavorita», «I desideri non si contraddicono», «La ripetizione è il nemico mortale»…). I ruoli del secondo e terzo cerchio hanno aspettative più leggere, come consiglia McKee.
+- **Profilo**: la «bibbia» del personaggio in una pagina (stampabile) ed esportazione in **Markdown**.
+- **È identità.** Si modifica una bozza e la si salva esplicitamente: ogni salvataggio crea una nuova versione nella cronologia (con motivo facoltativo) ed è reversibile; esportazioni, varianti e duplicati portano con sé la costruzione. La sola posizione sulla mappa del cast non conta come modifica d'identità.
+- **Nelle conversazioni.** Con *Usa nelle conversazioni* attivo (predefinito), il profilo McKee entra nel contesto del personaggio (sezione *design* nell'ispettore del contesto): tratti osservabili, sé, motivazioni e desideri, contraddizioni, sottotesto, racconto di sé, modus operandi, relazioni. Il **sé nascosto** e il **desiderio inconscio** arrivano come materiale «sotto la consapevolezza»: guidano il comportamento ma il personaggio non li dichiara mai. Le scelte d'autore (arco, climax, simbolo, genere, scene pianificate) restano fuori: il personaggio non conosce la propria storia futura. L'*analisi esterna* invece vede tutta la costruzione.
+- **Storia e cast** (menu laterale, o il pulsante sulla scheda del progetto): l'impianto narrativo del progetto (logline, mezzo, causalità, tema, valore centrale, generi primari e di presentazione, mondo) e la **mappa del cast** con i cerchi di McKee: si trascinano i personaggi tra le orbite e le frecce mostrano chi aiuta o ostacola chi. Verifiche del cast («Nessuna protagonista», «Protagonista con meno dimensioni»…), schede di genere ed esportazione Markdown della storia.
+- **Coach McKee** (pulsante *Coach*): un collaboratore che legge la costruzione — anche le modifiche non ancora salvate —, le verifiche McKee, la tappa aperta e i passaggi pertinenti del libro. Usa il **motore del personaggio** (LM Studio, OpenAI o compatibili; nessuno strumento richiesto, quindi funziona anche con modelli locali senza *function calling*). Propone valori per i campi e nuovi membri del cast: le proposte sono validate e vanno **applicate dall'autore** alla bozza, poi salvate. Le conversazioni con il coach non sono parlato del personaggio e non generano memorie.
+- **Distillare un'intervista** (esercizio del racconto di sé, Cap. 4): nel Dialogo, il pulsante con il martello apre il coach con la trascrizione della conversazione, che il coach trasforma in proposte per la costruzione.
+- **Il libro.** Il libro di McKee **non è incluso**. Se ne possiedi una copia in formato .epub, caricala in **Impostazioni → Libro di McKee** (resta in `data/books/`) oppure indica `PERSONA_BOOK_PATH`. PERSONA la legge in locale, la divide in passaggi per capitolo e sezione e la cerca con BM25; le ricerche in italiano vengono ampliate con il lessico inglese di McKee (*dimensione definitoria* → *defining dimension*). Senza libro tutto il resto funziona.
+- **Lingue.** I contenuti McKee (tappe, catalogo, verifiche, infografiche) sono in **italiano e inglese**; con l'interfaccia in francese, spagnolo, tedesco o portoghese appaiono in inglese. Il coach risponde nella lingua dell'interfaccia.
+
 ## Percorso tipico
 
 0. **Progetti**: crea una storia e rendila attiva dal selettore in cima al menu laterale. Personaggi, Dialogo, Scenari, Simulazioni e Memoria mostrano solo ciò che appartiene al progetto attivo (oppure *Tutti i progetti*). Un personaggio creato nasce nel progetto attivo; uno già esistente si aggiunge con *Aggiungi personaggio esistente*.
 1. **Personaggi → Nuovo personaggio**: identità, biografia, psicologia (Big Five facoltativi), comunicazione, competenze, lingue (madrelingua, livelli), base di conoscenza (testo, Markdown, PDF).
+   Poi la **Costruzione McKee**: le sedici tappe, con il coach accanto; poi **Storia e cast** per l'impianto narrativo del progetto e la mappa del cast.
 2. **Dialogo**: scegli il personaggio, crea una conversazione e parla in modalità *Dialogo*, *Intervista* o *Analisi esterna* (l'analisi non è mai presentata come parlato del personaggio). Puoi cambiare lingua di risposta in qualsiasi momento.
 3. **Elabora memoria** (o automaticamente oltre la soglia): riassunti incrementali ed estrazione di memorie con provenienza. Le nuove conversazioni ereditano le memorie pertinenti, non l'intera cronologia.
 4. **Memoria**: ispeziona, modifica, fissa, archivia, approva e promuovi le memorie; verifica di coerenza; anteprima del recupero.
@@ -125,12 +161,13 @@ npm run check       # tutti i precedenti
 
 I test usano il provider **mock**: non serve LM Studio. L'adattatore OpenAI-compatibile è verificato contro un server HTTP finto che imita le API di LM Studio (streaming SSE, `/v1/models`, `/api/v0/models`, errori).
 
-Smoke test end-to-end facoltativo nel browser (richiede Playwright con Chromium):
+Smoke test end-to-end facoltativi nel browser (richiedono Playwright con Chromium, ciascuno su un database vuoto):
 
 ```bash
 npm run build
 PERSONA_DATA_DIR=/tmp/persona-e2e PERSONA_PORT=4399 npm start
-node scripts/e2e-smoke.cjs /tmp/persona-shots   # in un altro terminale
+node scripts/e2e-smoke.cjs /tmp/persona-shots   # in un altro terminale: flusso principale
+node scripts/e2e-mckee.cjs /tmp/persona-shots   # (su un altro database vuoto) costruzione McKee, coach, libro, mappa del cast
 ```
 
 ## Dati e portabilità
@@ -138,6 +175,7 @@ node scripts/e2e-smoke.cjs /tmp/persona-shots   # in un altro terminale
 - Database: `data/persona.db` (SQLite, UTF-8). Backup in `data/backups/`.
 - **Backup**: Impostazioni → Backup (copia consistente tramite l'API di backup di SQLite). Il ripristino salva prima una copia di sicurezza del database corrente. Nota: il backup contiene anche le eventuali chiavi API salvate nelle configurazioni dei motori.
 - **Progetti**: tutto viene salvato automaticamente nel database locale; *Salva su file* crea una copia portabile del progetto (`persona.project`), riapribile con *Apri da file* sullo stesso o su un altro computer (riusando i personaggi già presenti o importandoli come nuove identità). Un progetto riaperto accanto all'originale riceve un nome numerato, es. «Saga (2)».
+- **Costruzione McKee e impianto della storia**: viaggiano con le esportazioni di personaggi (`build`) e progetti (`story`); aprendo un progetto da file le relazioni del cast puntano ai personaggi importati. I file di PERSONA 1 si importano come prima (senza costruzione).
 - **Esportazione personaggi e scenari**: JSON documentato in [`docs/export-format.md`](docs/export-format.md). Un personaggio esportato porta con sé identità, cronologia delle versioni, tutte le memorie personali e, a scelta, conversazioni del laboratorio e base di conoscenza; all'importazione si può scegliere cosa includere. L'importazione non sovrascrive mai dati esistenti, è tutto o niente (un file danneggiato non lascia dati parziali) e, se il file è di un altro tipo (scenario, progetto) o di una versione più recente, lo dice chiaramente.
 
 ## Architettura in breve
@@ -147,7 +185,7 @@ Identità del personaggio → Recupero memorie → Assemblaggio contesto → Ada
 → Risposta in streaming → Salvataggio conversazione → Elaborazione controllata della memoria
 ```
 
-Monorepo npm: `shared/` (tipi e schemi), `server/` (Fastify, SQLite, Drizzle, servizi), `web/` (React). Dettagli in [`docs/architecture.md`](docs/architecture.md). Il backend si avvia anche in-process con `startPersonaServer()` (`server/src/embedded.ts`, porta libera, cartella dati a scelta): un futuro involucro Electron potrà usarlo e caricare la stessa interfaccia senza riscritture.
+Monorepo npm: `shared/` (tipi e schemi; `shared/src/mckee/` = modello, tappe, catalogo, analisi e verifiche McKee, condivisi da backend e frontend), `server/` (Fastify, SQLite, Drizzle, servizi), `web/` (React). Dettagli in [`docs/architecture.md`](docs/architecture.md). Il backend si avvia anche in-process con `startPersonaServer()` (`server/src/embedded.ts`, porta libera, cartella dati a scelta): un futuro involucro Electron potrà usarlo e caricare la stessa interfaccia senza riscritture.
 
 ## Sicurezza
 
@@ -168,10 +206,12 @@ Monorepo npm: `shared/` (tipi e schemi), `server/` (Fastify, SQLite, Drizzle, se
 - La regia automatica dei turni dipende dalla capacità del modello di rispondere in JSON; in caso contrario si ripiega sulla rotazione.
 - La competenza linguistica e specialistica del personaggio è simulata ed è limitata dalle reali capacità del modello scelto.
 - Modificare un messaggio non rielabora le memorie già estratte da quel messaggio.
+- **Costruzione McKee**: i contenuti di McKee sono tradotti solo in italiano e inglese (in fr/es/de/pt appaiono in inglese). La costruzione è unica per l'identità: un personaggio presente in più storie ha la stessa orbita e le stesse relazioni in tutte (la storia di riferimento si sceglie nel costruttore). La qualità delle proposte del coach dipende dalla capacità del modello di produrre JSON valido; le proposte non valide vengono scartate e segnalate. Il coach e la distillazione sono verificati con il provider mock, non con un modello reale. La ricerca nel libro è lessicale (BM25) e funziona con gli EPUB non cifrati (DRM non supportato).
 - Le conversazioni del laboratorio appartengono al personaggio, non al progetto: un personaggio condiviso tra più storie ha un'unica identità, un'unica memoria personale e le stesse conversazioni di laboratorio in tutte. Solo scenari, sessioni, simulazioni e memorie contestuali sono separati per progetto.
 
 ## Crediti
 
+- Costruzione dei personaggi: [CharBuild](https://github.com/fopearcano/char-build), dal metodo di Robert McKee, *Character: The Art of Role and Cast Design for Page, Stage, and Screen* (Twelve, 2021). Le indicazioni delle tappe sono parafrasi con riferimenti ai capitoli; nessun testo del libro è incluso nell'app.
 - Carattere «macchina da scrivere»: [Courier Prime](https://quoteunquoteapps.com/courierprime/) di Alan Dague-Greene, licenza SIL Open Font License 1.1, incluso nell'app tramite il pacchetto `@fontsource/courier-prime` (nessun download durante l'uso). Copre gli alfabeti latini; per gli altri (es. cirillico) si usa Courier di sistema.
 
 ## Roadmap
@@ -180,3 +220,5 @@ Monorepo npm: `shared/` (tipi e schemi), `server/` (Fastify, SQLite, Drizzle, se
 - Indice vettoriale (es. sqlite-vec) per basi di memoria molto grandi.
 - OCR per PDF scansionati.
 - Revisione delle traduzioni da parte di madrelingua; altre lingue dell'interfaccia.
+- Contenuti McKee in francese, spagnolo, tedesco e portoghese; orbita del cast distinta per storia.
+- Verifica del coach McKee con modelli locali reali (LM Studio).

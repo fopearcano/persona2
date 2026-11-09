@@ -30,6 +30,9 @@ Identità, cronologia dell'identità e **tutte** le memorie personali sono sempr
     "portrait": "data:image/jpeg;base64,…" | null,
     "temperament": "…", "interpersonalStyle": "…", "conflictResponse": "…", "stressResponse": "…",
     "bigFive": { "openness": 85, "conscientiousness": 70, "extraversion": null, "agreeableness": 40, "neuroticism": null } | null,
+    // PERSONA 2, facoltativo: la costruzione McKee (CharacterBuild, vedi shared/src/mckee/model.ts),
+    // senza i Big Five, che restano in "bigFive". Assente o null = nessuna costruzione.
+    "build": { "schema": 1, "useInContext": true, "concept": { … }, "cast": { "circle": "protagonist", … }, "dimensions": [ … ], "relationships": [ { "targetId": "<id di un altro personaggio>", … } ], … } | null,
     "register": "…", "vocabulary": "…", "formality": "…", "humor": "…", "assertiveness": "…",
     "argumentativeStyle": "…", "conversationalDepth": "…", "culturalLinguisticNotes": "…",
     "preferredLanguage": "it" | null,
@@ -104,7 +107,7 @@ Identità, cronologia dell'identità e **tutte** le memorie personali sono sempr
 
 ## Compatibilità
 
-Le versioni future del formato incrementeranno `version` e manterranno l'importazione delle versioni precedenti. Campi aggiunti in modo compatibile (come `identityRevisions` e `status`) restano nella versione 1: i file che non li contengono si importano come prima.
+Le versioni future del formato incrementeranno `version` e manterranno l'importazione delle versioni precedenti. Campi aggiunti in modo compatibile (come `identityRevisions`, `status` e, da PERSONA 2, `character.build` e `snapshot.build` nelle revisioni) restano nella versione 1: i file che non li contengono si importano come prima. La costruzione importata viene normalizzata (solo chiavi note); le relazioni verso personaggi che non esistono nel database di destinazione restano ma non vengono mostrate.
 
 ---
 
@@ -155,8 +158,11 @@ Un progetto è una storia: il file contiene il cast, gli scenari e, a scelta, co
   "format": "persona.project",
   "version": 1,
   "exportedAt": "…",
-  "app": { "name": "PERSONA", "version": "0.4.0" },
+  "app": { "name": "PERSONA", "version": "2.0.0" },
   "project": { "id": "…", "name": "Cronache di Marte", "description": "…" | null, "status": "active" | "archived",
+               // PERSONA 2, facoltativo: impianto narrativo McKee (StoryDesign: logline, media, causality,
+               // theme, coreValue, genre { primary, presentational, combination }, world, notes).
+               "story": { "schema": 1, "logline": "…", "genre": { "primary": ["crime", "redemption"], … }, … },
                "createdAt": "…", "updatedAt": "…" },
   // Un persona.character v1 per ogni membro del progetto (e per ogni partecipante agli scenari),
   // con base di conoscenza, memorie personali e, se richieste, le conversazioni del Laboratorio.
@@ -170,6 +176,7 @@ Un progetto è una storia: il file contiene il cast, gli scenari e, a scelta, co
 ## Regole di apertura
 
 - Viene sempre creato un **nuovo** progetto; il progetto originale, se presente, non viene toccato. Se esiste già un progetto con lo stesso nome, il nuovo riceve un suffisso numerato («Cronache di Marte (2)»).
+- L'impianto narrativo (`project.story`) viene ripreso; i personaggi importati come nuove identità hanno le relazioni McKee (`build.relationships[].targetId`) riportate ai nuovi id.
 - `characters=reuse` (predefinito): i personaggi il cui id esiste già vengono riutilizzati così come sono (identità e memorie invariate) e aggiunti al nuovo progetto; gli altri vengono importati come nuove identità. `characters=new`: tutti i personaggi vengono importati come nuove identità.
 - Ogni scenario viene importato secondo le regole di `persona.scenario`, all'interno del nuovo progetto e ricollegato ai personaggi riusati o importati.
 - `conversations=0` ignora le conversazioni del Laboratorio presenti nel file; `sessions=0` ignora sessioni e simulazioni degli scenari.
