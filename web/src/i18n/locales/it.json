@@ -11,7 +11,8 @@
     "scenarios": "Scenari",
     "simulations": "Simulazioni",
     "memory": "Memoria",
-    "settings": "Impostazioni"
+    "settings": "Impostazioni",
+    "story": "Storia e cast"
   },
   "common": {
     "save": "Salva",
@@ -83,7 +84,8 @@
     "invalid_pdf": "PDF non valido: {{message}}",
     "embeddings_unsupported": "Il provider selezionato non supporta gli embedding.",
     "network": "Backend non raggiungibile. È in esecuzione?",
-    "generic": "Si è verificato un errore."
+    "generic": "Si è verificato un errore.",
+    "invalid_book": "Il file non è un EPUB leggibile: {{message}}"
   },
   "toast": {
     "saved": "Salvato",
@@ -829,5 +831,82 @@
     "previewAction": "Azione principale",
     "previewLink": "Collegamento",
     "reset": "Ripristina lo stile predefinito"
+  },
+  "mckee": {
+    "distill": "Distilla nella costruzione McKee",
+    "build": {
+      "title": "Costruzione McKee",
+      "open": "Costruzione McKee",
+      "story": "Storia",
+      "useInContext": "Usa nelle conversazioni",
+      "useInContextHelp": "Il profilo McKee entra nel contesto del personaggio: il sé nascosto e il desiderio inconscio come sottotesto, mai dichiarati. Arco e scelte d'autore restano fuori.",
+      "stations": "Tappe",
+      "station": "Tappa",
+      "profile": "Profilo",
+      "coach": "Coach",
+      "reason": "Motivo della modifica (facoltativo)",
+      "seeProfile": "Vedi il profilo",
+      "print": "Stampa",
+      "live": "Visualizzazione dal vivo",
+      "editStory": "Impianto della storia"
+    },
+    "coach": {
+      "title": "Coach McKee",
+      "tabs": {
+        "coach": "Coach",
+        "book": "Libro"
+      },
+      "threads": "Conversazioni con il coach",
+      "newThread": "Nuova conversazione",
+      "deleteThread": "Elimina la conversazione",
+      "deleteThreadConfirm": "Eliminare questa conversazione con il coach?",
+      "intro": "Il coach legge la costruzione (anche le modifiche non salvate), le verifiche McKee e, se lo hai caricato, il tuo libro. Usa il motore del personaggio. Le sue proposte non vengono mai applicate da sole: le applichi alla bozza e poi salvi.",
+      "brainstorm": "Idee per questa tappa",
+      "critique": "Critica questa tappa",
+      "brainstormPrompt": "Aiutami a sviluppare la tappa {{station}}: proponi due o tre direzioni concrete e specifiche.",
+      "critiquePrompt": "Critica la tappa {{station}} secondo McKee: cosa manca, cosa è cliché, cosa rafforzeresti?",
+      "distillPrompt": "Distilla questa conversazione nella costruzione: cosa rivela del personaggio (verità e autoinganni) e quali campi proporresti di compilare?",
+      "placeholder": "Chiedi al coach (Invio per inviare, Maiusc+Invio per andare a capo)",
+      "send": "Invia",
+      "stop": "Interrompi",
+      "reasoning": "Ragionamento",
+      "incomplete": "Risposta incompleta",
+      "bookUsed": "Dal libro: {{list}}",
+      "proposal": "Proposta",
+      "applied": "Applicata",
+      "dismissed": "Scartata",
+      "rejected_one": "{{count}} valore scartato perché non valido",
+      "rejected_other": "{{count}} valori scartati perché non validi",
+      "apply": "Applica alla bozza",
+      "addCast": "Aggiungi alla storia",
+      "dismiss": "Scarta",
+      "appliedToast": "Proposta applicata alla bozza: salva per registrare una nuova versione dell'identità.",
+      "castAdded": "«{{name}}» è stato aggiunto alla storia."
+    },
+    "book": {
+      "noBook": "Nessun libro caricato. Carica la tua copia di «Character» di Robert McKee (epub) nelle impostazioni.",
+      "settingsLink": "Impostazioni → Libro di McKee",
+      "searchPlaceholder": "Cerca nel libro (es. dimensione definitoria)",
+      "noResults": "Nessun passaggio trovato. Prova altre parole."
+    },
+    "settings": {
+      "title": "Libro di McKee",
+      "intro": "La costruzione dei personaggi segue «Character» di Robert McKee. Se possiedi il libro in formato .epub puoi caricarlo: PERSONA lo cerca in locale (ricerca nel libro e passaggi pertinenti per il coach). Il libro non è incluso nell'app e resta nella cartella dei dati di questo computer.",
+      "upload": "Carica epub",
+      "replace": "Sostituisci",
+      "removeConfirm": "Rimuovere il libro da PERSONA? Il file viene eliminato dalla cartella dei dati.",
+      "uploaded": "Libro caricato: {{title}}",
+      "status": "{{title}} — {{passages}} passaggi indicizzati ({{file}})",
+      "unreadable": "Impossibile leggere {{file}}: {{error}}",
+      "none": "Nessun libro caricato: la ricerca nel libro e i passaggi per il coach non sono disponibili.",
+      "fromEnv": "Il libro è impostato con la variabile PERSONA_BOOK_PATH."
+    },
+    "story": {
+      "title": "Storia e cast",
+      "subtitle": "Impianto narrativo e mappa del cast secondo McKee",
+      "noProjects": "Crea un progetto per progettarne la storia e il cast.",
+      "saved": "Impianto della storia salvato.",
+      "open": "Storia e cast"
+    }
   }
 }

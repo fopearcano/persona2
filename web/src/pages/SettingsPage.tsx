@@ -16,12 +16,13 @@ import type {
 } from '@persona/shared/client';
 import { ACCENT_CHOICES, FONT_CHOICES, PLANNED_UI_LANGUAGES, PROVIDER_TYPES, TEXT_SIZES, UI_LANGUAGES } from '@persona/shared/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, CheckCircle2, DatabaseBackup, Download, Plug, Plus, RefreshCw, RotateCcw, Save, Search, Sparkles, Star, Trash2, Upload, XCircle } from 'lucide-react';
+import { BookOpen, Check, CheckCircle2, DatabaseBackup, Download, Plug, Plus, RefreshCw, RotateCcw, Save, Search, Sparkles, Star, Trash2, Upload, XCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api, downloadUrl } from '../api/client';
-import { qk, useBackups, useInfo, useInvalidate, useModelConfigs, usePreferences } from '../api/hooks';
+import { qk, useBackups, useBook, useInfo, useInvalidate, useModelConfigs, usePreferences } from '../api/hooks';
+import type { BookStatus } from '@persona/shared/client';
 import { LanguageSelect } from '../components/LanguageSelect';
 import { Badge, Button, Card, Checkbox, ErrorBox, Field, IconButton, Input, PageHeader, Segmented, Select, Spinner, useErrorText } from '../components/ui';
 import { ACCENT_PRESETS, DEFAULT_APPEARANCE, FONT_STACKS, accentBase, accentTokens } from '../lib/appearance';
@@ -59,6 +60,7 @@ export function SettingsPage() {
           <ModelsCard />
           <MemoryContextCard prefs={prefs} />
           <EmbeddingsCard prefs={prefs} />
+          <McKeeBookCard />
           <BackupCard />
           <InfoCard />
         </div>
@@ -718,6 +720,81 @@ function EmbeddingsCard({ prefs }: { prefs: Preferences }) {
         )}
       </div>
     </Card>
+  );
+}
+
+/** Copia dell'autore di CHARACTER (epub) per la ricerca nel libro e il coach McKee. */
+function McKeeBookCard() {
+  const { t } = useTranslation();
+  const { data: book } = useBook();
+  const qc = useQueryClient();
+  const toast = useUi((s) => s.toast);
+  const errorText = useErrorText();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const done = (b: BookStatus) => qc.setQueryData(qk.book, b);
+  return (
+    <section id="mckee-book" className="scroll-mt-4">
+      <Card
+        title={t('mckee.settings.title')}
+        actions={
+          book?.fromEnv ? null : (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".epub,application/epub+zip"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!f) return;
+                  setBusy(true);
+                  try {
+                    const b = await api.upload<BookStatus>(`/api/book?filename=${encodeURIComponent(f.name)}`, f);
+                    done(b);
+                    toast(t('mckee.settings.uploaded', { title: b.title ?? f.name }), 'success');
+                  } catch (err) {
+                    toast(errorText(err), 'error');
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              />
+              {book?.file && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={<Trash2 className="size-3.5" />}
+                  onClick={async () => {
+                    if (!window.confirm(t('mckee.settings.removeConfirm'))) return;
+                    done(await api.del<BookStatus>('/api/book'));
+                  }}
+                >
+                  {t('common.remove')}
+                </Button>
+              )}
+              <Button size="sm" variant="primary" loading={busy} icon={<Upload className="size-3.5" />} onClick={() => fileRef.current?.click()}>
+                {book?.file ? t('mckee.settings.replace') : t('mckee.settings.upload')}
+              </Button>
+            </>
+          )
+        }
+      >
+        <p className="mb-3 text-xs text-muted">{t('mckee.settings.intro')}</p>
+        {book?.available ? (
+          <p className="flex items-center gap-2 text-sm">
+            <BookOpen className="size-4 text-ok" aria-hidden />
+            {t('mckee.settings.status', { title: book.title, passages: book.passages, file: book.file })}
+          </p>
+        ) : book?.error ? (
+          <p className="text-sm text-danger">{t('mckee.settings.unreadable', { file: book.file, error: book.error })}</p>
+        ) : (
+          <p className="text-sm text-muted">{t('mckee.settings.none')}</p>
+        )}
+        {book?.fromEnv && <p className="mt-2 text-xs text-muted">{t('mckee.settings.fromEnv')}</p>}
+      </Card>
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 import type { BigFive, Character, CharacterSnapshot, ExpertiseLevel, KnowledgeHit, KnowledgeSource, PdfExtraction, ProficiencyLevel, TraitCategory } from '@persona/shared/client';
 import { EPISTEMIC_STATUSES, EXPERTISE_LEVELS, PROFICIENCY_LEVELS } from '@persona/shared/client';
-import { ArrowLeft, GitBranch, History, MessagesSquare, Plus, RotateCcw, Save, Search, Trash2, Upload, X } from 'lucide-react';
+import { ArrowLeft, GitBranch, Hammer, History, MessagesSquare, Plus, RotateCcw, Save, Search, Trash2, Upload, X } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
@@ -205,6 +205,16 @@ export function CharacterEditorPage() {
               <Input className="w-64" placeholder={t('editor.revisionReason')} value={reason} onChange={(e) => setReason(e.target.value)} aria-label={t('editor.revisionReason')} />
               <Button icon={<MessagesSquare className="size-4" />} onClick={() => navigate(`/dialogue/${id}`)}>
                 {t('characters.talk')}
+              </Button>
+              <Button
+                icon={<Hammer className="size-4" />}
+                title={dirty ? t('common.unsaved') : undefined}
+                onClick={() => {
+                  if (dirty && !window.confirm(t('common.leaveWarning'))) return;
+                  navigate(`/characters/${id}/build`);
+                }}
+              >
+                {t('mckee.build.open')}
               </Button>
             </>
           )}

@@ -11,7 +11,8 @@
     "scenarios": "Scénarios",
     "simulations": "Simulations",
     "memory": "Mémoire",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "story": "Histoire et distribution"
   },
   "common": {
     "save": "Enregistrer",
@@ -83,7 +84,8 @@
     "invalid_pdf": "PDF non valide : {{message}}",
     "embeddings_unsupported": "Le fournisseur sélectionné ne prend pas en charge les embeddings.",
     "network": "Serveur local injoignable. Est-il démarré ?",
-    "generic": "Une erreur s'est produite."
+    "generic": "Une erreur s'est produite.",
+    "invalid_book": "Le fichier n'est pas un EPUB lisible : {{message}}"
   },
   "toast": {
     "saved": "Enregistré",
@@ -829,5 +831,82 @@
     "previewAction": "Action principale",
     "previewLink": "Lien",
     "reset": "Rétablir le style par défaut"
+  },
+  "mckee": {
+    "distill": "Distiller dans la construction McKee",
+    "build": {
+      "title": "Construction McKee",
+      "open": "Construction McKee",
+      "story": "Histoire",
+      "useInContext": "Utiliser dans les conversations",
+      "useInContextHelp": "Le profil McKee entre dans le contexte du personnage : le moi caché et le désir inconscient comme sous-texte, jamais énoncés. L'arc et les choix d'auteur restent dehors.",
+      "stations": "Stations",
+      "station": "Station",
+      "profile": "Profil",
+      "coach": "Coach",
+      "reason": "Motif de la modification (facultatif)",
+      "seeProfile": "Voir le profil",
+      "print": "Imprimer",
+      "live": "Visualisation en direct",
+      "editStory": "Conception de l'histoire"
+    },
+    "coach": {
+      "title": "Coach McKee",
+      "tabs": {
+        "coach": "Coach",
+        "book": "Livre"
+      },
+      "threads": "Conversations avec le coach",
+      "newThread": "Nouvelle conversation",
+      "deleteThread": "Supprimer la conversation",
+      "deleteThreadConfirm": "Supprimer cette conversation avec le coach ?",
+      "intro": "Le coach lit la construction (modifications non enregistrées comprises), les vérifications McKee et, si vous l'avez importé, votre livre. Il utilise le moteur du personnage. Ses propositions ne sont jamais appliquées seules : vous les appliquez au brouillon, puis vous enregistrez.",
+      "brainstorm": "Idées pour cette station",
+      "critique": "Critiquer cette station",
+      "brainstormPrompt": "Aide-moi à développer la station {{station}} : propose deux ou trois directions concrètes et précises.",
+      "critiquePrompt": "Critique la station {{station}} à la manière de McKee : que manque-t-il, qu'est-ce qui est cliché, que renforcerais-tu ?",
+      "distillPrompt": "Distille cette conversation dans la construction : que révèle-t-elle du personnage (vérités et illusions sur soi) et quels champs proposerais-tu de remplir ?",
+      "placeholder": "Demandez au coach (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)",
+      "send": "Envoyer",
+      "stop": "Arrêter",
+      "reasoning": "Raisonnement",
+      "incomplete": "Réponse incomplète",
+      "bookUsed": "Du livre : {{list}}",
+      "proposal": "Proposition",
+      "applied": "Appliquée",
+      "dismissed": "Écartée",
+      "rejected_one": "{{count}} valeur invalide écartée",
+      "rejected_other": "{{count}} valeurs invalides écartées",
+      "apply": "Appliquer au brouillon",
+      "addCast": "Ajouter à l'histoire",
+      "dismiss": "Écarter",
+      "appliedToast": "Proposition appliquée au brouillon : enregistrez pour créer une nouvelle version de l'identité.",
+      "castAdded": "« {{name}} » a été ajouté à l'histoire."
+    },
+    "book": {
+      "noBook": "Aucun livre importé. Importez votre exemplaire de « Character » de Robert McKee (epub) dans les paramètres.",
+      "settingsLink": "Paramètres → Livre de McKee",
+      "searchPlaceholder": "Rechercher dans le livre (ex. defining dimension)",
+      "noResults": "Aucun passage trouvé. Essayez d'autres mots."
+    },
+    "settings": {
+      "title": "Livre de McKee",
+      "intro": "La construction des personnages suit « Character » de Robert McKee. Si vous possédez le livre au format .epub, vous pouvez l'importer : PERSONA le parcourt en local (recherche dans le livre et passages pertinents pour le coach). Le livre n'est pas inclus dans l'application et reste dans le dossier de données de cet ordinateur.",
+      "upload": "Importer un epub",
+      "replace": "Remplacer",
+      "removeConfirm": "Retirer le livre de PERSONA ? Le fichier est supprimé du dossier de données.",
+      "uploaded": "Livre importé : {{title}}",
+      "status": "{{title}} — {{passages}} passages indexés ({{file}})",
+      "unreadable": "Impossible de lire {{file}} : {{error}}",
+      "none": "Aucun livre importé : la recherche dans le livre et les passages pour le coach ne sont pas disponibles.",
+      "fromEnv": "Le livre est défini par la variable PERSONA_BOOK_PATH."
+    },
+    "story": {
+      "title": "Histoire et distribution",
+      "subtitle": "Conception de l'histoire et carte de la distribution selon McKee",
+      "noProjects": "Créez un projet pour en concevoir l'histoire et la distribution.",
+      "saved": "Conception de l'histoire enregistrée.",
+      "open": "Histoire et distribution"
+    }
   }
 }

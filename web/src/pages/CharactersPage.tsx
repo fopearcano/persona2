@@ -1,5 +1,5 @@
 import type { CharacterExportV1, CharacterSummary } from '@persona/shared/client';
-import { Archive, ArchiveRestore, Copy, Download, FolderMinus, FolderPlus, GitBranch, MessagesSquare, Plus, Trash2, Upload } from 'lucide-react';
+import { Archive, ArchiveRestore, Copy, Download, FolderMinus, FolderPlus, GitBranch, Hammer, MessagesSquare, Plus, Trash2, Upload } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
@@ -186,6 +186,7 @@ export function CharactersPage() {
                 </span>
                 <div className="flex items-center">
                   <IconButton label={t('characters.talk')} icon={<MessagesSquare className="size-4" />} onClick={() => navigate(`/dialogue/${c.id}`)} />
+                  <IconButton label={t('mckee.build.open')} icon={<Hammer className="size-4" />} onClick={() => navigate(`/characters/${c.id}/build`)} />
                   <IconButton
                     label={t('common.duplicate')}
                     icon={<Copy className="size-4" />}

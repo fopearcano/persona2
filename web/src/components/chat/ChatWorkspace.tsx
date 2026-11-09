@@ -1,6 +1,6 @@
 import type { ContextMeta, DialogueMode, MemoryProcessingResult, Message, MessageRole, StreamEvent, TurnMode } from '@persona/shared/client';
 import { TURN_MODES } from '@persona/shared/client';
-import { Archive, ArchiveRestore, BrainCircuit, Eye, EyeOff, FastForward, PanelRight, Pencil, Send, SkipForward, Square, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, BrainCircuit, Eye, EyeOff, FastForward, Hammer, PanelRight, Pencil, Send, SkipForward, Square, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -263,6 +263,14 @@ export function ChatWorkspace({ conversationId, onDeleted }: { conversationId: s
           </div>
         )}
         <div className="flex items-center gap-1">
+          {kind === 'lab' && conv.characterId && (
+            <IconButton
+              label={t('mckee.distill')}
+              icon={<Hammer className="size-4" />}
+              disabled={generating || conv.messageCount === 0}
+              onClick={() => navigate(`/characters/${conv.characterId}/build?distill=${conv.id}`)}
+            />
+          )}
           <Button
             size="sm"
             icon={<BrainCircuit className="size-3.5" />}

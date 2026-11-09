@@ -14,6 +14,8 @@ const ScenarioSessionPage = lazy(() => import('./pages/ScenarioEditorPage').then
 const ScenariosPage = lazy(() => import('./pages/ScenariosPage').then((m) => ({ default: m.ScenariosPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const SimulationsPage = lazy(() => import('./pages/SimulationsPage').then((m) => ({ default: m.SimulationsPage })));
+const BuildPage = lazy(() => import('./pages/BuildPage').then((m) => ({ default: m.BuildPage })));
+const StoryPage = lazy(() => import('./pages/StoryPage').then((m) => ({ default: m.StoryPage })));
 const SimulationPage = lazy(() => import('./pages/SimulationsPage').then((m) => ({ default: m.SimulationPage })));
 
 export function App() {
@@ -26,6 +28,9 @@ export function App() {
           <Route path="/characters" element={<CharactersPage />} />
           <Route path="/characters/new" element={<CharacterEditorPage key="new" />} />
           <Route path="/characters/:id" element={<CharacterEditorPage />} />
+          <Route path="/characters/:id/build" element={<BuildPage />} />
+          <Route path="/story" element={<StoryPage />} />
+          <Route path="/story/:projectId" element={<StoryPage />} />
           <Route path="/dialogue" element={<DialoguePage />} />
           <Route path="/dialogue/:characterId" element={<DialoguePage />} />
           <Route path="/dialogue/:characterId/:conversationId" element={<DialoguePage />} />

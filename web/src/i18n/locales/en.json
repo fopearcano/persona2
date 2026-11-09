@@ -11,7 +11,8 @@
     "scenarios": "Scenarios",
     "simulations": "Simulations",
     "memory": "Memory",
-    "settings": "Settings"
+    "settings": "Settings",
+    "story": "Story & cast"
   },
   "common": {
     "save": "Save",
@@ -83,7 +84,8 @@
     "invalid_pdf": "Invalid PDF: {{message}}",
     "embeddings_unsupported": "The selected provider does not support embeddings.",
     "network": "Backend unreachable. Is it running?",
-    "generic": "An error occurred."
+    "generic": "An error occurred.",
+    "invalid_book": "The file is not a readable EPUB: {{message}}"
   },
   "toast": {
     "saved": "Saved",
@@ -829,5 +831,82 @@
     "previewAction": "Primary action",
     "previewLink": "Link",
     "reset": "Restore the default style"
+  },
+  "mckee": {
+    "distill": "Distill into the McKee build",
+    "build": {
+      "title": "McKee build",
+      "open": "McKee build",
+      "story": "Story",
+      "useInContext": "Use in conversations",
+      "useInContextHelp": "The McKee profile joins the character's context: the hidden self and subconscious desire as subtext, never stated. Arc and author-only choices stay out.",
+      "stations": "Stations",
+      "station": "Station",
+      "profile": "Profile",
+      "coach": "Coach",
+      "reason": "Reason for the change (optional)",
+      "seeProfile": "See the profile",
+      "print": "Print",
+      "live": "Live visualization",
+      "editStory": "Story design"
+    },
+    "coach": {
+      "title": "McKee coach",
+      "tabs": {
+        "coach": "Coach",
+        "book": "Book"
+      },
+      "threads": "Coach conversations",
+      "newThread": "New conversation",
+      "deleteThread": "Delete conversation",
+      "deleteThreadConfirm": "Delete this coach conversation?",
+      "intro": "The coach reads the build (unsaved edits included), the McKee checks and, if you uploaded it, your book. It uses the character's engine. Its proposals are never applied on their own: you apply them to the draft, then save.",
+      "brainstorm": "Ideas for this station",
+      "critique": "Critique this station",
+      "brainstormPrompt": "Help me develop station {{station}}: offer two or three concrete, specific directions.",
+      "critiquePrompt": "Critique station {{station}} the McKee way: what is missing, what is cliché, what would you strengthen?",
+      "distillPrompt": "Distill this conversation into the build: what does it reveal about the character (truths and self-deceptions), and which fields would you propose to fill?",
+      "placeholder": "Ask the coach (Enter to send, Shift+Enter for a new line)",
+      "send": "Send",
+      "stop": "Stop",
+      "reasoning": "Reasoning",
+      "incomplete": "Incomplete reply",
+      "bookUsed": "From the book: {{list}}",
+      "proposal": "Proposal",
+      "applied": "Applied",
+      "dismissed": "Dismissed",
+      "rejected_one": "{{count}} invalid value was dropped",
+      "rejected_other": "{{count}} invalid values were dropped",
+      "apply": "Apply to draft",
+      "addCast": "Add to the story",
+      "dismiss": "Dismiss",
+      "appliedToast": "Proposal applied to the draft: save to record a new identity version.",
+      "castAdded": "“{{name}}” was added to the story."
+    },
+    "book": {
+      "noBook": "No book uploaded. Upload your copy of Robert McKee's “Character” (epub) in the settings.",
+      "settingsLink": "Settings → McKee book",
+      "searchPlaceholder": "Search the book (e.g. defining dimension)",
+      "noResults": "No passages found. Try other words."
+    },
+    "settings": {
+      "title": "McKee book",
+      "intro": "Character building follows Robert McKee's “Character”. If you own the book as an .epub you can upload it: PERSONA searches it locally (book search and relevant passages for the coach). The book is not included in the app and stays in this computer's data folder.",
+      "upload": "Upload epub",
+      "replace": "Replace",
+      "removeConfirm": "Remove the book from PERSONA? The file is deleted from the data folder.",
+      "uploaded": "Book uploaded: {{title}}",
+      "status": "{{title}} — {{passages}} passages indexed ({{file}})",
+      "unreadable": "Could not read {{file}}: {{error}}",
+      "none": "No book uploaded: book search and passages for the coach are unavailable.",
+      "fromEnv": "The book is set with the PERSONA_BOOK_PATH variable."
+    },
+    "story": {
+      "title": "Story & cast",
+      "subtitle": "Story design and cast map after McKee",
+      "noProjects": "Create a project to design its story and cast.",
+      "saved": "Story design saved.",
+      "open": "Story & cast"
+    }
   }
 }

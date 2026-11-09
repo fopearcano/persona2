@@ -11,7 +11,8 @@
     "scenarios": "Escenarios",
     "simulations": "Simulaciones",
     "memory": "Memoria",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "story": "Historia y reparto"
   },
   "common": {
     "save": "Guardar",
@@ -83,7 +84,8 @@
     "invalid_pdf": "PDF no válido: {{message}}",
     "embeddings_unsupported": "El proveedor seleccionado no admite embeddings.",
     "network": "No se puede contactar con el servidor local. ¿Está en marcha?",
-    "generic": "Se ha producido un error."
+    "generic": "Se ha producido un error.",
+    "invalid_book": "El archivo no es un EPUB legible: {{message}}"
   },
   "toast": {
     "saved": "Guardado",
@@ -829,5 +831,82 @@
     "previewAction": "Acción principal",
     "previewLink": "Enlace",
     "reset": "Restablecer el estilo predeterminado"
+  },
+  "mckee": {
+    "distill": "Destilar en la construcción McKee",
+    "build": {
+      "title": "Construcción McKee",
+      "open": "Construcción McKee",
+      "story": "Historia",
+      "useInContext": "Usar en las conversaciones",
+      "useInContextHelp": "El perfil McKee entra en el contexto del personaje: el yo oculto y el deseo inconsciente como subtexto, nunca declarados. El arco y las decisiones de autor quedan fuera.",
+      "stations": "Estaciones",
+      "station": "Estación",
+      "profile": "Perfil",
+      "coach": "Coach",
+      "reason": "Motivo del cambio (opcional)",
+      "seeProfile": "Ver el perfil",
+      "print": "Imprimir",
+      "live": "Visualización en vivo",
+      "editStory": "Diseño de la historia"
+    },
+    "coach": {
+      "title": "Coach McKee",
+      "tabs": {
+        "coach": "Coach",
+        "book": "Libro"
+      },
+      "threads": "Conversaciones con el coach",
+      "newThread": "Nueva conversación",
+      "deleteThread": "Eliminar la conversación",
+      "deleteThreadConfirm": "¿Eliminar esta conversación con el coach?",
+      "intro": "El coach lee la construcción (incluidos los cambios sin guardar), las comprobaciones McKee y, si lo has cargado, tu libro. Usa el motor del personaje. Sus propuestas nunca se aplican solas: las aplicas al borrador y luego guardas.",
+      "brainstorm": "Ideas para esta estación",
+      "critique": "Criticar esta estación",
+      "brainstormPrompt": "Ayúdame a desarrollar la estación {{station}}: propón dos o tres direcciones concretas y específicas.",
+      "critiquePrompt": "Critica la estación {{station}} al estilo de McKee: ¿qué falta, qué es cliché, qué reforzarías?",
+      "distillPrompt": "Destila esta conversación en la construcción: ¿qué revela del personaje (verdades y autoengaños) y qué campos propondrías rellenar?",
+      "placeholder": "Pregunta al coach (Intro para enviar, Mayús+Intro para nueva línea)",
+      "send": "Enviar",
+      "stop": "Detener",
+      "reasoning": "Razonamiento",
+      "incomplete": "Respuesta incompleta",
+      "bookUsed": "Del libro: {{list}}",
+      "proposal": "Propuesta",
+      "applied": "Aplicada",
+      "dismissed": "Descartada",
+      "rejected_one": "{{count}} valor no válido descartado",
+      "rejected_other": "{{count}} valores no válidos descartados",
+      "apply": "Aplicar al borrador",
+      "addCast": "Añadir a la historia",
+      "dismiss": "Descartar",
+      "appliedToast": "Propuesta aplicada al borrador: guarda para registrar una nueva versión de la identidad.",
+      "castAdded": "«{{name}}» se ha añadido a la historia."
+    },
+    "book": {
+      "noBook": "No hay ningún libro cargado. Carga tu ejemplar de «Character» de Robert McKee (epub) en los ajustes.",
+      "settingsLink": "Ajustes → Libro de McKee",
+      "searchPlaceholder": "Buscar en el libro (p. ej. defining dimension)",
+      "noResults": "No se encontraron pasajes. Prueba con otras palabras."
+    },
+    "settings": {
+      "title": "Libro de McKee",
+      "intro": "La construcción de personajes sigue «Character» de Robert McKee. Si tienes el libro en formato .epub puedes cargarlo: PERSONA lo busca en local (búsqueda en el libro y pasajes pertinentes para el coach). El libro no está incluido en la aplicación y permanece en la carpeta de datos de este ordenador.",
+      "upload": "Cargar epub",
+      "replace": "Sustituir",
+      "removeConfirm": "¿Quitar el libro de PERSONA? El archivo se elimina de la carpeta de datos.",
+      "uploaded": "Libro cargado: {{title}}",
+      "status": "{{title}} — {{passages}} pasajes indexados ({{file}})",
+      "unreadable": "No se pudo leer {{file}}: {{error}}",
+      "none": "No hay ningún libro cargado: la búsqueda en el libro y los pasajes para el coach no están disponibles.",
+      "fromEnv": "El libro está definido con la variable PERSONA_BOOK_PATH."
+    },
+    "story": {
+      "title": "Historia y reparto",
+      "subtitle": "Diseño de la historia y mapa del reparto según McKee",
+      "noProjects": "Crea un proyecto para diseñar su historia y su reparto.",
+      "saved": "Diseño de la historia guardado.",
+      "open": "Historia y reparto"
+    }
   }
 }

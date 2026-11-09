@@ -1,5 +1,5 @@
 import type { Project, ProjectExportV1, ProjectSummary } from '@persona/shared/client';
-import { Check, Download, FolderKanban, FolderOpen, Pencil, Plus, Trash2, Upload } from 'lucide-react';
+import { Check, Download, FolderKanban, FolderOpen, Network, Pencil, Plus, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -136,6 +136,7 @@ export function ProjectsPage() {
                     {t('projects.open')}
                   </Button>
                   <div className="flex items-center">
+                    <IconButton label={t('mckee.story.open')} icon={<Network className="size-4" />} onClick={() => activate(p, `/story/${p.id}`)} />
                     <IconButton label={t('common.edit')} icon={<Pencil className="size-4" />} onClick={() => setEditing(p)} />
                     <IconButton label={t('projects.save')} icon={<Download className="size-4" />} onClick={() => setSaving(p)} />
                     <IconButton

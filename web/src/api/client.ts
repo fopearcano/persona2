@@ -53,11 +53,11 @@ export const api = {
 };
 
 /** Analizza un flusso SSE (testo) in eventi. Gestisce eventi spezzati tra chunk. */
-export class SseParser {
+export class SseParser<E = StreamEvent> {
   private buffer = '';
-  push(text: string): StreamEvent[] {
+  push(text: string): E[] {
     this.buffer += text;
-    const events: StreamEvent[] = [];
+    const events: E[] = [];
     let idx: number;
     while ((idx = this.buffer.indexOf('\n\n')) >= 0) {
       const block = this.buffer.slice(0, idx);
@@ -69,7 +69,7 @@ export class SseParser {
         .join('\n');
       if (!data) continue;
       try {
-        events.push(JSON.parse(data) as StreamEvent);
+        events.push(JSON.parse(data) as E);
       } catch {
         /* evento malformato: ignorato */
       }
@@ -79,10 +79,10 @@ export class SseParser {
 }
 
 /** POST con risposta in streaming (Server-Sent Events). */
-export async function streamPost(
+export async function streamPost<E = StreamEvent>(
   url: string,
   body: unknown,
-  onEvent: (e: StreamEvent) => void,
+  onEvent: (e: E) => void,
   signal?: AbortSignal,
 ): Promise<void> {
   let res: Response;
@@ -101,7 +101,7 @@ export async function streamPost(
   if (!res.body) return;
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
-  const parser = new SseParser();
+  const parser = new SseParser<E>();
   try {
     for (;;) {
       const { done, value } = await reader.read();

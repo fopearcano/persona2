@@ -11,7 +11,8 @@
     "scenarios": "Szenarien",
     "simulations": "Simulationen",
     "memory": "Gedächtnis",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "story": "Geschichte und Besetzung"
   },
   "common": {
     "save": "Speichern",
@@ -83,7 +84,8 @@
     "invalid_pdf": "Ungültiges PDF: {{message}}",
     "embeddings_unsupported": "Der ausgewählte Anbieter unterstützt keine Embeddings.",
     "network": "Lokaler Server nicht erreichbar. Läuft er?",
-    "generic": "Ein Fehler ist aufgetreten."
+    "generic": "Ein Fehler ist aufgetreten.",
+    "invalid_book": "Die Datei ist kein lesbares EPUB: {{message}}"
   },
   "toast": {
     "saved": "Gespeichert",
@@ -829,5 +831,82 @@
     "previewAction": "Hauptaktion",
     "previewLink": "Link",
     "reset": "Standardstil wiederherstellen"
+  },
+  "mckee": {
+    "distill": "In den McKee-Aufbau übernehmen",
+    "build": {
+      "title": "McKee-Aufbau",
+      "open": "McKee-Aufbau",
+      "story": "Geschichte",
+      "useInContext": "In Gesprächen verwenden",
+      "useInContextHelp": "Das McKee-Profil fließt in den Kontext der Figur ein: das verborgene Selbst und der unbewusste Wunsch als Subtext, nie ausgesprochen. Bogen und Autorentscheidungen bleiben außen vor.",
+      "stations": "Stationen",
+      "station": "Station",
+      "profile": "Profil",
+      "coach": "Coach",
+      "reason": "Grund der Änderung (optional)",
+      "seeProfile": "Profil ansehen",
+      "print": "Drucken",
+      "live": "Live-Visualisierung",
+      "editStory": "Anlage der Geschichte"
+    },
+    "coach": {
+      "title": "McKee-Coach",
+      "tabs": {
+        "coach": "Coach",
+        "book": "Buch"
+      },
+      "threads": "Gespräche mit dem Coach",
+      "newThread": "Neues Gespräch",
+      "deleteThread": "Gespräch löschen",
+      "deleteThreadConfirm": "Dieses Gespräch mit dem Coach löschen?",
+      "intro": "Der Coach liest den Aufbau (auch ungespeicherte Änderungen), die McKee-Prüfungen und, falls hochgeladen, dein Buch. Er nutzt die Engine der Figur. Seine Vorschläge werden nie von selbst übernommen: Du wendest sie auf den Entwurf an und speicherst dann.",
+      "brainstorm": "Ideen für diese Station",
+      "critique": "Diese Station kritisieren",
+      "brainstormPrompt": "Hilf mir, die Station {{station}} zu entwickeln: Schlage zwei oder drei konkrete, spezifische Richtungen vor.",
+      "critiquePrompt": "Kritisiere die Station {{station}} im Sinne McKees: Was fehlt, was ist Klischee, was würdest du stärken?",
+      "distillPrompt": "Übernimm dieses Gespräch in den Aufbau: Was verrät es über die Figur (Wahrheiten und Selbsttäuschungen), und welche Felder würdest du ausfüllen?",
+      "placeholder": "Frag den Coach (Eingabe zum Senden, Umschalt+Eingabe für neue Zeile)",
+      "send": "Senden",
+      "stop": "Stoppen",
+      "reasoning": "Überlegung",
+      "incomplete": "Unvollständige Antwort",
+      "bookUsed": "Aus dem Buch: {{list}}",
+      "proposal": "Vorschlag",
+      "applied": "Übernommen",
+      "dismissed": "Verworfen",
+      "rejected_one": "{{count}} ungültiger Wert verworfen",
+      "rejected_other": "{{count}} ungültige Werte verworfen",
+      "apply": "Auf Entwurf anwenden",
+      "addCast": "Zur Geschichte hinzufügen",
+      "dismiss": "Verwerfen",
+      "appliedToast": "Vorschlag auf den Entwurf angewendet: Speichere, um eine neue Identitätsversion anzulegen.",
+      "castAdded": "„{{name}}“ wurde der Geschichte hinzugefügt."
+    },
+    "book": {
+      "noBook": "Kein Buch hochgeladen. Lade dein Exemplar von Robert McKees „Character“ (epub) in den Einstellungen hoch.",
+      "settingsLink": "Einstellungen → McKee-Buch",
+      "searchPlaceholder": "Im Buch suchen (z. B. defining dimension)",
+      "noResults": "Keine Passagen gefunden. Versuche andere Wörter."
+    },
+    "settings": {
+      "title": "McKee-Buch",
+      "intro": "Der Figurenaufbau folgt Robert McKees „Character“. Wenn du das Buch als .epub besitzt, kannst du es hochladen: PERSONA durchsucht es lokal (Buchsuche und passende Passagen für den Coach). Das Buch ist nicht in der App enthalten und bleibt im Datenordner dieses Computers.",
+      "upload": "Epub hochladen",
+      "replace": "Ersetzen",
+      "removeConfirm": "Das Buch aus PERSONA entfernen? Die Datei wird aus dem Datenordner gelöscht.",
+      "uploaded": "Buch hochgeladen: {{title}}",
+      "status": "{{title}} — {{passages}} Passagen indexiert ({{file}})",
+      "unreadable": "{{file}} konnte nicht gelesen werden: {{error}}",
+      "none": "Kein Buch hochgeladen: Buchsuche und Passagen für den Coach sind nicht verfügbar.",
+      "fromEnv": "Das Buch ist über die Variable PERSONA_BOOK_PATH festgelegt."
+    },
+    "story": {
+      "title": "Geschichte und Besetzung",
+      "subtitle": "Anlage der Geschichte und Besetzungskarte nach McKee",
+      "noProjects": "Lege ein Projekt an, um seine Geschichte und Besetzung zu entwerfen.",
+      "saved": "Anlage der Geschichte gespeichert.",
+      "open": "Geschichte und Besetzung"
+    }
   }
 }

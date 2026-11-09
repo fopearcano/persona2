@@ -1,4 +1,4 @@
-import { BookUser, Brain, Drama, FolderKanban, MessagesSquare, Orbit, Settings, UserPlus, Users } from 'lucide-react';
+import { BookUser, Brain, Drama, FolderKanban, MessagesSquare, Network, Orbit, Settings, UserPlus, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation } from 'react-router';
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/projects', key: 'projects', icon: FolderKanban, end: false },
   { to: '/characters', key: 'characters', icon: Users, end: false },
   { to: '/characters/new', key: 'creator', icon: UserPlus, end: true },
+  { to: '/story', key: 'story', icon: Network, end: false },
   { to: '/dialogue', key: 'dialogue', icon: MessagesSquare },
   { to: '/scenarios', key: 'scenarios', icon: Orbit },
   { to: '/simulations', key: 'simulations', icon: Drama },
@@ -24,7 +25,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-panel focus:p-2">
         {t('common.skipToContent')}
       </a>
-      <nav aria-label="PERSONA" className="flex w-14 shrink-0 flex-col border-r border-border bg-panel md:w-52">
+      <nav aria-label="PERSONA" className="flex w-14 shrink-0 flex-col border-r border-border bg-panel md:w-52 print:hidden">
         <div className="flex h-14 items-center gap-2 border-b border-border px-4">
           <BookUser className="size-5 shrink-0 text-accent" aria-hidden />
           <div className="hidden leading-tight md:block">

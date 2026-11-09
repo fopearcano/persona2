@@ -1,6 +1,11 @@
 import type {
   AppInfo,
   BackupInfo,
+  BookStatus,
+  BuildContext,
+  CastMember,
+  CoachThread,
+  CoachThreadDetail,
   Character,
   CharacterSummary,
   Conversation,
@@ -33,6 +38,11 @@ export const qk = {
   preferences: ['preferences'] as const,
   backups: ['backups'] as const,
   info: ['info'] as const,
+  buildContext: (id: string, projectId?: string | null) => ['character', id, 'build-context', projectId ?? 'auto'] as const,
+  projectCast: (id: string) => ['projects', id, 'cast'] as const,
+  book: ['book'] as const,
+  coachThreads: (characterId: string) => ['character', characterId, 'coach'] as const,
+  coachThread: (id: string) => ['coach', id] as const,
 };
 
 const qs = (params: Record<string, string | undefined>) => {
@@ -99,6 +109,26 @@ export const usePreferences = () => useQuery({ queryKey: qk.preferences, queryFn
 export const useBackups = () => useQuery({ queryKey: qk.backups, queryFn: () => api.get<BackupInfo[]>('/api/backups') });
 
 export const useInfo = () => useQuery({ queryKey: qk.info, queryFn: () => api.get<AppInfo>('/api/info') });
+
+/* ---------------- Costruzione McKee (PERSONA 2) ---------------- */
+
+export const useBuildContext = (id: string | undefined, projectId?: string | null) =>
+  useQuery({
+    queryKey: qk.buildContext(id ?? '', projectId),
+    queryFn: () => api.get<BuildContext>(`/api/characters/${id}/build-context${qs({ projectId: projectId ?? undefined })}`),
+    enabled: !!id,
+  });
+
+export const useProjectCast = (projectId: string | null | undefined) =>
+  useQuery({ queryKey: qk.projectCast(projectId ?? ''), queryFn: () => api.get<CastMember[]>(`/api/projects/${projectId}/cast`), enabled: !!projectId });
+
+export const useBook = () => useQuery({ queryKey: qk.book, queryFn: () => api.get<BookStatus>('/api/book') });
+
+export const useCoachThreads = (characterId: string | undefined) =>
+  useQuery({ queryKey: qk.coachThreads(characterId ?? ''), queryFn: () => api.get<CoachThread[]>(`/api/characters/${characterId}/coach`), enabled: !!characterId });
+
+export const useCoachThread = (id: string | null | undefined) =>
+  useQuery({ queryKey: qk.coachThread(id ?? ''), queryFn: () => api.get<CoachThreadDetail>(`/api/coach/threads/${id}`), enabled: !!id });
 
 /** Invalida i dati collegati dopo una modifica. */
 export function useInvalidate() {
