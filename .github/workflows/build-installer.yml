@@ -1,0 +1,111 @@
+# Costruzione di un installer desktop su una piattaforma (richiamato da release.yml).
+# Passi: dipendenze → Electron verificato con SHA-256 → electron-builder → smoke test dell'app
+# impacchettata → artefatto "installers-<platform>".
+name: Build installer
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: 'win | linux | mac'
+        required: true
+        type: string
+      electron:
+        description: 'Archivio di Electron da scaricare (es. win32-x64, linux-x64, darwin-x64)'
+        required: true
+        type: string
+      runner:
+        description: 'Etichette del runner in JSON (es. "windows-latest" o ["self-hosted","macOS","X64"])'
+        required: true
+        type: string
+      smoke-required:
+        description: 'Se falso, un errore dello smoke test non blocca la pubblicazione (solo avviso)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build:
+    name: Installer ${{ inputs.platform }}
+    runs-on: ${{ fromJSON(inputs.runner) }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: desktop
+        shell: bash
+    env:
+      # Cache degli strumenti scaricati da electron-builder (AppImage, fpm, NSIS, dmg…), condivisa tra le esecuzioni.
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/desktop/.eb-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Sui runner self-hosted la cartella resta tra le esecuzioni: si riparte sempre da pulito.
+          clean: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+      - name: Dipendenze dell'app desktop
+        run: |
+          rm -rf release
+          npm ci --no-workspaces
+      # I download dalle release di GitHub possono fallire in modo intermittente (504): i file già
+      # scaricati vengono conservati in cache anche se l'esecuzione fallisce, così i tentativi successivi ripartono da lì.
+      - name: Ripristino della cache dei download
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            desktop/electron-zips
+            desktop/.eb-cache
+          key: downloads-${{ inputs.platform }}-${{ hashFiles('desktop/package-lock.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: downloads-${{ inputs.platform }}-${{ hashFiles('desktop/package-lock.json') }}-
+      # Electron viene scaricato con tentativi ripetuti e verificato con i checksum ufficiali.
+      - name: Electron (download verificato)
+        run: node fetch-electron.mjs electron-zips ${{ inputs.electron }}
+      - name: Installer
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if npm run dist:${{ inputs.platform }} -- -c.electronDist=electron-zips; then exit 0; fi
+            echo "::warning::Creazione degli installer non riuscita (tentativo $attempt), nuovo tentativo tra 45 s"
+            sleep 45
+          done
+          exit 1
+        env:
+          # Nessun certificato di firma: installer non firmati (macOS: firma ad hoc).
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Salvataggio della cache dei download
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            desktop/electron-zips
+            desktop/.eb-cache
+          key: downloads-${{ inputs.platform }}-${{ hashFiles('desktop/package-lock.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Smoke test dell'app impacchettata
+        continue-on-error: ${{ !inputs.smoke-required }}
+        run: |
+          if [ "${{ inputs.platform }}" = "linux" ]; then
+            xvfb-run -a node smoke.mjs --packaged smoke-shots
+          else
+            node smoke.mjs --packaged smoke-shots
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ inputs.platform }}
+          path: |
+            desktop/release/*.AppImage
+            desktop/release/*.deb
+            desktop/release/*.exe
+            desktop/release/*.dmg
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-${{ inputs.platform }}
+          path: desktop/smoke-shots
+          if-no-files-found: ignore

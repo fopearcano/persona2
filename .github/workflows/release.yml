@@ -1,0 +1,148 @@
+# Installer desktop e pubblicazione della release su GitHub.
+#
+# Avvio:
+#   - push di un tag "vX.Y.Z" (deve coincidere con la versione di desktop/package.json), oppure
+#   - manuale (Actions → Release → Run workflow) indicando il tag: viene creato alla pubblicazione.
+#
+# Flusso:
+#   verifica (typecheck, test, build del frontend)
+#   → installer Windows e Linux sui runner di GitHub, con smoke test dell'app impacchettata
+#   → pubblicazione della release con gli installer e SHA256SUMS.txt
+#   → installer macOS Intel sul runner self-hosted (etichette self-hosted, macOS, X64), aggiunto
+#     alla stessa release con SHA256SUMS.txt aggiornato.
+# Il Mac è un job separato: se il runner self-hosted è spento o occupato, Windows e Linux vengono
+# pubblicati comunque e l'installer macOS si aggiunge quando il runner lo costruisce.
+#
+# Sicurezza: il runner self-hosted esegue solo questo workflow (tag o avvio manuale da chi ha
+# accesso in scrittura); non usarlo per workflow attivati da pull request.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag della release (es. v0.4.0), uguale alla versione di desktop/package.json'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  verify:
+    name: Verifica
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Tag e versione coincidono
+        shell: bash
+        run: |
+          version="v$(node -p "require('./desktop/package.json').version")"
+          if [ "$version" != "$RELEASE_TAG" ]; then
+            echo "::error::Il tag $RELEASE_TAG non corrisponde alla versione di desktop/package.json ($version)"
+            exit 1
+          fi
+          if [ ! -f "docs/releases/$RELEASE_TAG.md" ]; then
+            echo "::error::Note di rilascio mancanti: docs/releases/$RELEASE_TAG.md"
+            exit 1
+          fi
+      - run: npm ci
+      - name: Typecheck, test e build
+        run: npm run check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          if-no-files-found: error
+
+  package:
+    name: Installer
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win
+            electron: win32-x64
+            runner: '"windows-latest"'
+          - platform: linux
+            electron: linux-x64
+            runner: '"ubuntu-latest"'
+    uses: ./.github/workflows/build-installer.yml
+    with:
+      platform: ${{ matrix.platform }}
+      electron: ${{ matrix.electron }}
+      runner: ${{ matrix.runner }}
+
+  release:
+    name: Pubblicazione
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: dist
+          merge-multiple: true
+      - name: Checksum SHA-256
+        working-directory: dist
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: PERSONA ${{ env.RELEASE_TAG }}
+          body_path: docs/releases/${{ env.RELEASE_TAG }}.md
+          files: dist/*
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+
+  package-mac:
+    name: Installer macOS (Intel, self-hosted)
+    needs: verify
+    uses: ./.github/workflows/build-installer.yml
+    with:
+      platform: mac
+      electron: darwin-x64
+      runner: '["self-hosted","macOS","X64"]'
+      # L'avvio dell'app richiede una sessione grafica sul Mac: se il runner gira come servizio
+      # senza utente connesso lo smoke test può fallire senza che l'installer sia difettoso.
+      smoke-required: false
+
+  release-mac:
+    name: Pubblicazione macOS
+    needs: [release, package-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installers-mac
+          path: mac
+      - name: Aggiunta alla release (con SHA256SUMS.txt aggiornato)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release download "$RELEASE_TAG" --pattern SHA256SUMS.txt --dir .
+          grep -v -- '-mac-' SHA256SUMS.txt > sums.txt || true
+          (cd mac && sha256sum *) >> sums.txt
+          mv sums.txt SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$RELEASE_TAG" mac/* SHA256SUMS.txt --clobber

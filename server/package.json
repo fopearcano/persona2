@@ -1,0 +1,33 @@
+{
+  "name": "@persona/server",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "cross-env NODE_ENV=production tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate-cli.ts"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.10",
+    "@persona/shared": "0.4.0",
+    "better-sqlite3": "^13.0.3",
+    "cross-env": "^10.0.0",
+    "drizzle-orm": "^0.45.4",
+    "fastify": "^5.12.8",
+    "tsx": "^4.23.15",
+    "unpdf": "~1.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.20.5",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

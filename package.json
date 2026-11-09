@@ -1,0 +1,32 @@
+{
+  "name": "persona",
+  "version": "0.4.0",
+  "private": true,
+  "description": "PERSONA \u2014 laboratorio local-first per identit\u00e0 artificiali persistenti",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w web\"",
+    "build": "npm run build -w web",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck -w shared && npm run typecheck -w server && npm run typecheck -w web",
+    "test": "npm run test -w server && npm run test -w web",
+    "check": "npm run typecheck && npm run test && npm run build",
+    "db:generate": "npm run db:generate -w server",
+    "db:migrate": "npm run db:migrate -w server",
+    "desktop:install": "npm install --prefix desktop --no-workspaces",
+    "desktop": "npm run build && npm start --prefix desktop",
+    "desktop:smoke": "npm run build && npm run smoke --prefix desktop"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "typescript": "~5.9.3"
+  }
+}
