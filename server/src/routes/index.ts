@@ -29,6 +29,10 @@ import { coreMemories, searchScopedMemories } from '../services/retrieval.js';
 import * as projects from '../services/projects.js';
 import * as scenarioPortability from '../services/scenario-portability.js';
 import * as scenarios from '../services/scenarios.js';
+import * as book from '../services/book.js';
+import * as coach from '../services/coach.js';
+import * as mckee from '../services/mckee.js';
+import type { CoachStreamEvent } from '@persona/shared';
 
 type Params = { id: string };
 type Q = Record<string, string | undefined>;
@@ -189,6 +193,42 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     }
     return reply.code(201).send(result);
   });
+
+  /* ---------------- Costruzione McKee (PERSONA 2) ---------------- */
+  /** Salva la costruzione: parte dell'identità, crea una revisione. */
+  app.put<{ Params: Params }>('/api/characters/:id/build', async (req) => characters.saveBuild(ctx, req.params.id, req.body));
+  /** Orbita e posizione sul cast map. */
+  app.put<{ Params: Params }>('/api/characters/:id/cast', async (req) =>
+    characters.setCastPlacement(ctx, req.params.id, req.body, 'Cast map'),
+  );
+  /** Storia di riferimento e cast per il costruttore (`?projectId=`). */
+  app.get<{ Params: Params; Querystring: Q }>('/api/characters/:id/build-context', async (req) =>
+    mckee.buildContext(ctx, req.params.id, req.query.projectId ?? null),
+  );
+  app.get<{ Params: Params }>('/api/projects/:id/cast', async (req) => mckee.projectCast(ctx, req.params.id));
+
+  /* ---------------- Libro di McKee (copia dell'autore) ---------------- */
+  app.get('/api/book', async () => book.bookStatus(ctx));
+  app.post<{ Querystring: Q }>('/api/book', async (req) => {
+    if (!Buffer.isBuffer(req.body)) throw new AppError('invalid_book', 'Inviare il file .epub come application/octet-stream');
+    return book.uploadBook(ctx, req.body, req.query.filename ?? 'book.epub');
+  });
+  app.delete('/api/book', async () => book.removeBook(ctx));
+  app.get<{ Querystring: Q }>('/api/book/search', async (req) => book.searchBookRoute(ctx, req.query));
+
+  /* ---------------- Coach McKee ---------------- */
+  app.get<{ Params: Params }>('/api/characters/:id/coach', async (req) => coach.listThreads(ctx, req.params.id));
+  app.post<{ Params: Params }>('/api/characters/:id/coach', async (req, reply) => {
+    return streamResponse<CoachStreamEvent>(req, reply, (sink, signal) => coach.sendCoachMessage(ctx, req.params.id, req.body, sink, signal));
+  });
+  app.get<{ Params: Params }>('/api/coach/threads/:id', async (req) => coach.getThread(ctx, req.params.id));
+  app.delete<{ Params: Params }>('/api/coach/threads/:id', async (req, reply) => {
+    coach.deleteThread(ctx, req.params.id);
+    return reply.code(204).send();
+  });
+  app.put<{ Params: { id: string; proposalId: string } }>('/api/coach/messages/:id/proposals/:proposalId', async (req) =>
+    coach.setProposalStatus(ctx, req.params.id, req.params.proposalId, req.body),
+  );
 
   /* ---------------- Conoscenza ---------------- */
   app.get<{ Params: Params }>('/api/characters/:id/knowledge', async (req) => knowledge.listKnowledge(ctx, req.params.id));

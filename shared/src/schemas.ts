@@ -113,6 +113,11 @@ export const characterInputSchema = characterProfileSchema.extend({
   expertise: z.array(expertiseInputSchema).max(100).default([]),
   /** Motivo della modifica (registrato nella cronologia dell'identità). */
   revisionReason: optText(1000),
+  /**
+   * Costruzione McKee. Assente = invariata (l'editor dell'identità non la invia);
+   * null = svuotata. Normalizzata dal server (`normalizeBuild`).
+   */
+  build: z.unknown().optional(),
 });
 export type CharacterInput = z.input<typeof characterInputSchema>;
 export type CharacterInputParsed = z.output<typeof characterInputSchema>;
@@ -125,6 +130,42 @@ export const projectInputSchema = z.object({
   name: z.string().trim().min(1).max(200),
   description: optText(5000),
   status: z.enum(PROJECT_STATUSES).default('active'),
+  /** Impianto narrativo McKee. Assente = invariato. */
+  story: z.unknown().optional(),
+});
+
+/* ---------------- Costruzione McKee e coach ---------------- */
+
+export const buildSaveSchema = z.object({
+  build: z.unknown(),
+  revisionReason: optText(1000),
+});
+
+/** Spostamento nel cast map: orbita e angolo (non è una modifica d'identità significativa, ma crea comunque una revisione). */
+export const castPlacementSchema = z.object({
+  circle: z.enum(['', 'protagonist', 'first', 'second', 'third']),
+  angle: z.number().finite().min(-10).max(10).nullable().default(null),
+});
+
+export const coachMessageSchema = z.object({
+  threadId: z.string().nullish().transform((v) => v ?? null),
+  projectId: z.string().nullish().transform((v) => v ?? null),
+  content: z.string().trim().min(1).max(20000),
+  /** Stazione aperta nel costruttore. */
+  section: z.string().max(40).nullish().transform((v) => v ?? null),
+  /** Costruzione corrente non ancora salvata (bozza dell'autore): il coach la vede così com'è. */
+  draft: z.unknown().optional(),
+  uiLanguage: z.string().max(20).default('it'),
+  /** Conversazione di PERSONA da distillare nella costruzione (esercizio del racconto di sé, Cap. 4). */
+  transcriptConversationId: z.string().nullish().transform((v) => v ?? null),
+});
+
+export const coachProposalStatusSchema = z.object({ status: z.enum(['pending', 'applied', 'dismissed']) });
+
+export const bookSearchSchema = z.object({
+  q: z.string().trim().min(1).max(300),
+  limit: z.coerce.number().int().min(1).max(12).default(6),
+  lang: z.string().max(20).default('en'),
 });
 export type ProjectInput = z.input<typeof projectInputSchema>;
 

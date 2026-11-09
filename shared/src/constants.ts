@@ -145,6 +145,7 @@ export const ERROR_CODES = [
   'invalid_backup',
   'invalid_pdf',
   'embeddings_unsupported',
+  'invalid_book',
   'internal',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

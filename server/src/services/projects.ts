@@ -21,7 +21,8 @@ import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import { characters, projectCharacters, projects, scenarioParticipants, scenarios, userPreferences } from '../db/schema.js';
 import { assertPersonaFile } from '../lib/import-check.js';
-import { AppError, newId, notFound, nowIso, validate } from '../lib/util.js';
+import { normalizeStoryDesign } from '@persona/shared/mckee';
+import { AppError, newId, notFound, nowIso, parseJson, validate } from '../lib/util.js';
 import { deleteCharacter, getCharacterRow } from './characters.js';
 import { exportCharacter, importCharacter } from './portability.js';
 import { getPreferences, updatePreferences } from './preferences.js';
@@ -37,9 +38,16 @@ function toProject(r: ProjectRow): Project {
     name: r.name,
     description: r.description,
     status: r.status as Project['status'],
+    story: normalizeStoryDesign(parseJson<unknown>(r.story, null)),
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
   };
+}
+
+/** Impianto narrativo da salvare: undefined = invariato, altrimenti normalizzato. */
+function storyColumn(story: unknown): { story?: string | null } {
+  if (story === undefined) return {};
+  return { story: story === null ? null : JSON.stringify(normalizeStoryDesign(story)) };
 }
 
 export function getProjectRow(ctx: AppContext, id: string): ProjectRow {
@@ -55,7 +63,7 @@ export function getProject(ctx: AppContext, id: string): Project {
 export function listProjects(ctx: AppContext): ProjectSummary[] {
   return ctx.dbm.sqlite
     .prepare(
-      `SELECT p.id, p.name, p.description, p.status, p.created_at AS createdAt, p.updated_at AS updatedAt,
+      `SELECT p.id, p.name, p.description, p.status, p.story, p.created_at AS createdAt, p.updated_at AS updatedAt,
               (SELECT count(*) FROM project_characters pc WHERE pc.project_id = p.id) AS characterCount,
               (SELECT count(*) FROM scenarios s WHERE s.project_id = p.id) AS scenarioCount,
               (SELECT count(*) FROM conversations c JOIN scenarios s ON s.id = c.scenario_id
@@ -69,21 +77,25 @@ export function listProjects(ctx: AppContext): ProjectSummary[] {
          FROM projects p
         ORDER BY p.status ASC, lastActivityAt DESC`,
     )
-    .all() as ProjectSummary[];
+    .all()
+    .map((r) => {
+      const row = r as Omit<ProjectSummary, 'story'> & { story: string | null };
+      return { ...row, story: normalizeStoryDesign(parseJson<unknown>(row.story, null)) };
+    });
 }
 
 export function createProject(ctx: AppContext, input: ProjectInput): Project {
-  const data = validate(projectInputSchema, input);
+  const { story, ...data } = validate(projectInputSchema, input);
   const id = newId();
   const ts = nowIso();
-  ctx.dbm.db.insert(projects).values({ id, ...data, createdAt: ts, updatedAt: ts }).run();
+  ctx.dbm.db.insert(projects).values({ id, ...data, ...storyColumn(story), createdAt: ts, updatedAt: ts }).run();
   return getProject(ctx, id);
 }
 
 export function updateProject(ctx: AppContext, id: string, input: ProjectInput): Project {
   getProjectRow(ctx, id);
-  const data = validate(projectInputSchema, input);
-  ctx.dbm.db.update(projects).set({ ...data, updatedAt: nowIso() }).where(eq(projects.id, id)).run();
+  const { story, ...data } = validate(projectInputSchema, input);
+  ctx.dbm.db.update(projects).set({ ...data, ...storyColumn(story), updatedAt: nowIso() }).where(eq(projects.id, id)).run();
   return getProject(ctx, id);
 }
 
@@ -230,7 +242,12 @@ export function exportProject(ctx: AppContext, id: string, opts: { conversations
 const projectBundleSchema = z.object({
   format: z.literal(PROJECT_EXPORT_FORMAT),
   version: z.literal(PROJECT_EXPORT_VERSION),
-  project: z.object({ name: z.string().min(1), description: z.string().nullish(), status: z.enum(['active', 'archived']).optional() }),
+  project: z.object({
+    name: z.string().min(1),
+    description: z.string().nullish(),
+    status: z.enum(['active', 'archived']).optional(),
+    story: z.unknown().optional(),
+  }),
   characters: z.array(z.object({ format: z.literal(CHARACTER_EXPORT_FORMAT), character: z.object({ id: z.string() }).passthrough() }).passthrough()),
   scenarios: z.array(z.unknown()).default([]),
 });
@@ -271,6 +288,7 @@ export function importProject(ctx: AppContext, payload: unknown, options: unknow
       name: availableProjectName(ctx, data.project.name),
       description: data.project.description ?? null,
       status: data.project.status ?? 'active',
+      story: data.project.story ?? null,
     });
     const existing = new Set(
       data.characters.length
@@ -299,6 +317,7 @@ export function importProject(ctx: AppContext, payload: unknown, options: unknow
       }
     }
     ensureMembership(ctx, project.id, [...idMap.values()]);
+    remapRelationships(ctx, idMap);
     for (const bundle of data.scenarios) {
       const r = importScenario(ctx, bundle, { characters: 'reuse', includeSessions: opts.includeSessions }, { idMap, projectId: project.id });
       result.imported.scenarios++;
@@ -309,4 +328,27 @@ export function importProject(ctx: AppContext, payload: unknown, options: unknow
   })();
   result.project = getProject(ctx, projectId);
   return result;
+}
+
+/**
+ * Dopo un'importazione con nuovi identificativi, le relazioni McKee dei personaggi importati
+ * puntano ancora agli id del file: le si riporta ai nuovi id (parte della creazione, nessuna revisione).
+ */
+function remapRelationships(ctx: AppContext, idMap: Map<string, string>): void {
+  const created = [...idMap.entries()].filter(([oldId, newId]) => oldId !== newId).map(([, newId]) => newId);
+  if (!created.length) return;
+  const rows = ctx.dbm.db.select({ id: characters.id, build: characters.build }).from(characters).where(inArray(characters.id, created)).all();
+  for (const row of rows) {
+    const build = parseJson<{ relationships?: { targetId?: string }[] } | null>(row.build, null);
+    if (!build?.relationships?.length) continue;
+    let changed = false;
+    for (const r of build.relationships) {
+      const mapped = r.targetId ? idMap.get(r.targetId) : undefined;
+      if (mapped && mapped !== r.targetId) {
+        r.targetId = mapped;
+        changed = true;
+      }
+    }
+    if (changed) ctx.dbm.db.update(characters).set({ build: JSON.stringify(build) }).where(eq(characters.id, row.id)).run();
+  }
 }

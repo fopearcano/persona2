@@ -21,6 +21,7 @@ import type {
   TraitCategory,
   TurnMode,
 } from './constants.js';
+import type { CharacterBuild, StoryDesign } from './mckee/model.js';
 
 /* ------------------------------------------------------------------ */
 /* Personaggi                                                          */
@@ -100,6 +101,12 @@ export interface Character extends CharacterProfileFields {
   identityVersion: number;
   /** Progetti di cui il personaggio fa parte (appartenenza, non identità). */
   projectIds: string[];
+  /**
+   * Costruzione McKee (sedici stazioni). Fa parte dell'identità: si salva con
+   * `PUT /api/characters/:id/build` e crea una revisione. Sempre normalizzata; i Big Five
+   * della stazione 04 rispecchiano `bigFive` (razionalità = 100 − nevroticismo).
+   */
+  build: CharacterBuild;
   createdAt: string;
   updatedAt: string;
   traits: CharacterTrait[];
@@ -123,6 +130,10 @@ export interface CharacterSummary {
   conversationCount: number;
   /** Progetti (storie) di cui il personaggio fa parte: la stessa identità può stare in più progetti. */
   projectIds: string[];
+  /** Orbita nel cast secondo la costruzione McKee ('' = non collocato). */
+  castCircle: string;
+  /** Ruolo generico della costruzione McKee (es. "Mentore"). */
+  roleLabel: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -136,6 +147,8 @@ export interface Project {
   name: string;
   description: string | null;
   status: ProjectStatus;
+  /** Impianto narrativo McKee (genere, tema, valori, mondo); sempre normalizzato. */
+  story: StoryDesign;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,6 +174,8 @@ export interface CharacterSnapshot extends CharacterProfileFields {
   traits: Omit<CharacterTrait, 'id'>[];
   languages: Omit<CharacterLanguage, 'id'>[];
   expertise: Omit<Expertise, 'id'>[];
+  /** Costruzione McKee (senza i Big Five, che sono in `bigFive`). Assente nei file e nelle revisioni di PERSONA 1. */
+  build?: CharacterBuild | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -615,3 +630,128 @@ export interface AppInfo {
     scenarios: number;
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Costruzione McKee: dati di contorno, libro e coach (PERSONA 2)      */
+/* ------------------------------------------------------------------ */
+
+/** Un membro del cast visto dal costruttore: identità minima + costruzione. */
+export interface CastMember {
+  id: string;
+  name: string;
+  portrait: string | null;
+  occupation: string | null;
+  build: CharacterBuild;
+}
+
+/** Contesto di una costruzione: la storia (progetto) di riferimento e il suo cast. */
+export interface BuildContext {
+  project: { id: string; name: string; story: StoryDesign } | null;
+  /** Progetti del personaggio, per scegliere la storia di riferimento. */
+  projects: { id: string; name: string }[];
+  /** Cast della storia di riferimento (escluso il personaggio stesso). */
+  cast: CastMember[];
+}
+
+export interface BookStatus {
+  available: boolean;
+  /** Nome del file .epub in uso. */
+  file: string | null;
+  title: string | null;
+  passages: number;
+  /** Il libro proviene da PERSONA_BOOK_PATH (non sostituibile dall'app). */
+  fromEnv: boolean;
+  error: string | null;
+}
+
+export interface BookPassage {
+  chapter: string;
+  section: string;
+  text: string;
+  score: number;
+}
+
+export interface BookSearchResult {
+  available: boolean;
+  query: string;
+  results: BookPassage[];
+}
+
+export type CoachProposalStatus = 'pending' | 'applied' | 'dismissed';
+
+export interface CoachUpdate {
+  path: string;
+  op: 'set' | 'append';
+  value: unknown;
+  /** Etichetta del campo nella lingua dell'interfaccia. */
+  label: string;
+  rationale: string;
+}
+
+export interface CoachCastSuggestion {
+  name: string;
+  roleLabel: string;
+  circle: string;
+  logline: string;
+  specialRoles: string[];
+  draws: string;
+  reason: string;
+}
+
+export interface CoachProposal {
+  id: string;
+  kind: 'updates' | 'cast';
+  summary: string;
+  updates: CoachUpdate[];
+  member: CoachCastSuggestion | null;
+  /** Aggiornamenti scartati dalla validazione (percorso o valore non validi). */
+  rejected: string[];
+  status: CoachProposalStatus;
+}
+
+export interface CoachMessageMeta {
+  providerType: ProviderType | null;
+  model: string | null;
+  /** Passaggi del libro forniti al coach per questa risposta. */
+  book: { chapter: string; section: string }[];
+  /** Stazione in primo piano. */
+  section: string | null;
+  promptTokens: number;
+}
+
+export interface CoachMessage {
+  id: string;
+  threadId: string;
+  seq: number;
+  role: 'author' | 'coach';
+  content: string;
+  reasoning: string | null;
+  section: string | null;
+  proposals: CoachProposal[];
+  meta: CoachMessageMeta | null;
+  status: 'complete' | 'incomplete' | 'error';
+  createdAt: string;
+}
+
+export interface CoachThread {
+  id: string;
+  characterId: string;
+  projectId: string | null;
+  title: string;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CoachThreadDetail extends CoachThread {
+  messages: CoachMessage[];
+}
+
+export type CoachStreamEvent =
+  | { type: 'thread'; thread: CoachThread }
+  | { type: 'author_message'; message: CoachMessage }
+  | { type: 'book'; passages: { chapter: string; section: string }[] }
+  | { type: 'delta'; text: string }
+  | { type: 'reasoning'; text: string }
+  | { type: 'done'; message: CoachMessage }
+  | { type: 'error'; error: { code: ErrorCode; message: string }; message: CoachMessage | null };

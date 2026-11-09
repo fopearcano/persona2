@@ -6,7 +6,7 @@ export interface ChatMessage {
 }
 
 /** Scopo della richiesta: i provider reali lo ignorano, il mock lo usa per risposte deterministiche. */
-export type InferencePurpose = 'character' | 'analysis' | 'summarize' | 'extract' | 'consistency' | 'title' | 'turn' | 'test';
+export type InferencePurpose = 'character' | 'analysis' | 'summarize' | 'extract' | 'consistency' | 'title' | 'turn' | 'test' | 'coach';
 
 export interface InferenceParams {
   model: string;

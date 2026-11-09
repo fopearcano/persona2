@@ -8,12 +8,15 @@ import type {
   IdentityRevision,
 } from '@persona/shared';
 import {
+  buildSaveSchema,
+  castPlacementSchema,
   characterInputSchema,
   characterStatusSchema,
   duplicateInputSchema,
   NO_PROJECT,
   variantInputSchema,
 } from '@persona/shared';
+import { bigFiveFromBuild, bigFiveToBuild, isBuildEmpty, normalizeBuild, type CharacterBuild } from '@persona/shared/mckee';
 import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm';
 import type { AppContext } from '../context.js';
 import type { Db } from '../db/client.js';
@@ -100,6 +103,21 @@ export function getCharacterRow(ctx: AppContext, id: string): CharacterRow {
   return row;
 }
 
+/** Costruzione McKee da salvare: normalizzata, senza Big Five (stanno in `big_five`); null se vuota. */
+export function storedBuild(raw: unknown): CharacterBuild | null {
+  if (raw == null) return null;
+  const b = normalizeBuild(raw);
+  b.outer.implicit.bigFive = {};
+  return isBuildEmpty(b) && b.useInContext ? null : b;
+}
+
+/** Costruzione per il DTO: sempre presente, con i Big Five dell'identità nella stazione 04. */
+export function buildFromRow(row: Pick<CharacterRow, 'build' | 'bigFive'>): CharacterBuild {
+  const b = normalizeBuild(parseJson<unknown>(row.build, null));
+  b.outer.implicit.bigFive = bigFiveToBuild(parseJson<BigFive | null>(row.bigFive, null));
+  return b;
+}
+
 function hydrate(db: Db, row: CharacterRow): Character {
   const traits = db
     .select()
@@ -123,6 +141,7 @@ function hydrate(db: Db, row: CharacterRow): Character {
     modelConfigId: row.modelConfigId,
     identityVersion: row.identityVersion,
     projectIds: [],
+    build: buildFromRow(row),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     traits: traits.map((t) => ({
@@ -160,6 +179,7 @@ export function snapshotOf(c: Character | CharacterSnapshot): CharacterSnapshot 
   const profile = Object.fromEntries(PROFILE_KEYS.map((k) => [k, (c as CharacterProfileFields)[k] ?? null])) as unknown as CharacterProfileFields;
   return {
     ...profile,
+    build: storedBuild(c.build ?? null),
     traits: c.traits.map((t, i) => ({ category: t.category, content: t.content, sortOrder: i })),
     languages: c.languages.map((l, i) => ({
       code: l.code,
@@ -188,6 +208,8 @@ export function listCharacters(ctx: AppContext, opts: { status?: string; project
     .prepare(
       `SELECT c.id, c.name, c.occupation, c.origin, c.portrait, c.status, c.parent_id AS parentId,
               c.variant_note AS variantNote, c.identity_version AS identityVersion,
+              coalesce(json_extract(c.build, '$.cast.circle'), '') AS castCircle,
+              coalesce(json_extract(c.build, '$.concept.roleLabel'), '') AS roleLabel,
               c.created_at AS createdAt, c.updated_at AS updatedAt,
               (SELECT count(*) FROM memories m WHERE m.character_id = c.id AND m.status != 'archived') AS memoryCount,
               (SELECT count(*) FROM conversation_participants p WHERE p.character_id = c.id) AS conversationCount
@@ -285,6 +307,7 @@ export function createCharacter(
         variantNote: extra.variantNote ?? null,
         modelConfigId: data.modelConfigId,
         identityVersion: 1,
+        build: buildJson(storedBuild(data.build ?? null)),
         createdAt: ts,
         updatedAt: ts,
       })
@@ -309,14 +332,18 @@ export function updateCharacter(ctx: AppContext, id: string, input: CharacterInp
   const data = validate(characterInputSchema, input);
   assertModelConfig(ctx, data.modelConfigId);
   const profile = Object.fromEntries(PROFILE_KEYS.map((k) => [k, data[k]])) as unknown as CharacterProfileFields;
+  // Costruzione assente nell'input = invariata (l'editor dell'identità non la invia).
+  const nextBuild = data.build === undefined ? storedBuild(before.build) : storedBuild(data.build);
   const nextSnap = snapshotOf({
     ...profile,
+    build: nextBuild,
     traits: data.traits.map((t, i) => ({ ...t, sortOrder: i })),
     languages: data.languages.map((l, i) => ({ ...l, notes: l.notes ?? null, sortOrder: i })),
     expertise: data.expertise.map((e, i) => ({ ...e, description: e.description ?? null, sortOrder: i })),
   } as CharacterSnapshot);
   const prevSnap = snapshotOf(before);
   const identityChanged = JSON.stringify(normalizeSnap(prevSnap)) !== JSON.stringify(normalizeSnap(nextSnap));
+  const buildChanged = JSON.stringify(prevSnap.build ?? null) !== JSON.stringify(nextSnap.build ?? null);
   const ts = nowIso();
   ctx.dbm.db.transaction((tx) => {
     if (identityChanged) {
@@ -336,6 +363,8 @@ export function updateCharacter(ctx: AppContext, id: string, input: CharacterInp
         ...profileToRow(profile),
         modelConfigId: data.modelConfigId,
         identityVersion: identityChanged ? before.identityVersion + 1 : before.identityVersion,
+        // La sola posizione sul cast map (angolo) non è identità: si salva senza revisione.
+        ...(buildChanged ? { build: buildJson(nextSnap.build ?? null) } : {}),
         updatedAt: ts,
       })
       .where(eq(characters.id, id))
@@ -352,7 +381,43 @@ function normalizeSnap(s: CharacterSnapshot) {
     proficiency: l.isNative ? 'native' : l.proficiency,
     isNative: l.isNative || l.proficiency === 'native',
   }));
-  return { ...s, bigFive: bf, languages: langs };
+  // L'angolo sul cast map è solo disposizione grafica: non conta come modifica d'identità.
+  const build = s.build ? { ...s.build, cast: { ...s.build.cast, mapAngle: null } } : null;
+  return { ...s, bigFive: bf, languages: langs, build };
+}
+
+function buildJson(b: CharacterBuild | null): string | null {
+  return b ? JSON.stringify(b) : null;
+}
+
+/**
+ * Salva la costruzione McKee. È parte dell'identità: crea una revisione e incrementa la
+ * versione (se qualcosa è cambiato). I Big Five della stazione 04 aggiornano quelli
+ * dell'identità.
+ */
+export function saveBuild(ctx: AppContext, id: string, input: unknown): Character {
+  const data = validate(buildSaveSchema, input);
+  if (JSON.stringify(data.build ?? null).length > 2_000_000) throw new AppError('validation', 'Costruzione troppo grande');
+  const current = getCharacter(ctx, id);
+  const build = normalizeBuild(data.build);
+  const snap = snapshotOf(current);
+  return updateCharacter(ctx, id, {
+    ...snap,
+    bigFive: bigFiveFromBuild(build.outer.implicit.bigFive),
+    build,
+    modelConfigId: current.modelConfigId,
+    revisionReason: data.revisionReason,
+  });
+}
+
+/** Colloca il personaggio su un'orbita del cast map (Cap. 6, 17). */
+export function setCastPlacement(ctx: AppContext, id: string, input: unknown, reason: string | null = null): Character {
+  const { circle, angle } = validate(castPlacementSchema, input);
+  const current = getCharacter(ctx, id);
+  const build = structuredClone(current.build);
+  build.cast.circle = circle;
+  build.cast.mapAngle = angle;
+  return saveBuild(ctx, id, { build, revisionReason: build.cast.circle !== current.build.cast.circle ? reason : null });
 }
 
 export function setCharacterModel(ctx: AppContext, id: string, modelConfigId: string | null): Character {
@@ -465,6 +530,8 @@ export function restoreRevision(ctx: AppContext, characterId: string, revisionId
   const snap = parseJson<CharacterSnapshot>(rev.snapshot, {} as CharacterSnapshot);
   return updateCharacter(ctx, characterId, {
     ...snap,
+    // Revisioni di PERSONA 1: non avevano costruzione McKee.
+    build: snap.build ?? null,
     modelConfigId: current.modelConfigId,
     revisionReason: `Ripristino della versione ${rev.version}`,
   });

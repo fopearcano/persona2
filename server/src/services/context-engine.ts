@@ -3,7 +3,7 @@
  * dai dati persistenti di PERSONA, entro un budget di token configurabile.
  *
  * Ordine: istruzioni di sistema → identità canonica (+ memorie core) → personalità →
- * comunicazione → competenze → profilo linguistico/lingua di risposta → modalità →
+ * comunicazione → competenze → costruzione McKee (PERSONA 2) → profilo linguistico/lingua di risposta → modalità →
  * contesto di scenario → memorie recuperate → conoscenza → riassunto → estratti →
  * direzione dell'autore → cronologia recente → ultimo messaggio.
  */
@@ -36,6 +36,7 @@ import {
 import { embedQuery } from './embeddings.js';
 import { coreMemories, searchExcerpts, searchKnowledge, searchScopedMemories, type SemanticQuery, touchMemories } from './retrieval.js';
 import { getScenario } from './scenarios.js';
+import { designSection } from './mckee.js';
 
 export interface EngineInfo {
   providerType: ProviderType;
@@ -205,12 +206,21 @@ export async function assembleContext(ctx: AppContext, input: AssembleInput): Pr
     identityTruncated = bio.truncated;
   }
 
+  // --- Costruzione McKee (PERSONA 2): parte dell'identità, entro un tetto del budget ---
+  const designCap = Math.floor(inputBudget * 0.25);
+  const designRaw = designSection(ctx, character, input.mode === 'analysis' ? 'analysis' : 'character');
+  const design = designRaw ? truncateToTokens(designRaw, designCap) : null;
+  const pushDesign = () => {
+    if (design) push('design', design.text, { truncated: design.truncated });
+  };
+
   if (input.mode === 'analysis') {
     push('instructions', analysisInstructions(character, input.responseLanguage));
     push('identity', identityText, { items: coreLines.length, truncated: identityTruncated });
     push('personality', personalitySection(character));
     push('communication', communicationSection(character));
     push('expertise', expertiseSection(character));
+    pushDesign();
     push('language', languageSection(character, input.responseLanguage).replace(/^Respond in:.*$/m, '').trim());
     if (scenario) push('scenario', scenarioContext(character, scenario));
   } else {
@@ -219,6 +229,7 @@ export async function assembleContext(ctx: AppContext, input: AssembleInput): Pr
     push('personality', personalitySection(character));
     push('communication', communicationSection(character));
     push('expertise', expertiseSection(character));
+    pushDesign();
     push('language', languageSection(character, input.responseLanguage));
     push('mode', modeSection(character, input.mode === 'interview' ? 'interview' : 'dialogue', kind));
     if (scenario) push('scenario', scenarioContext(character, scenario));

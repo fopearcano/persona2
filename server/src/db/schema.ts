@@ -53,6 +53,11 @@ export const characters = sqliteTable(
     variantNote: text('variant_note'),
     modelConfigId: text('model_config_id').references(() => modelConfigurations.id, { onDelete: 'set null' }),
     identityVersion: integer('identity_version').notNull().default(1),
+    /**
+     * JSON CharacterBuild | null: la costruzione McKee in sedici stazioni (PERSONA 2).
+     * Fa parte dell'identità (revisioni). I Big Five restano in `big_five`.
+     */
+    build: text('build'),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -232,6 +237,8 @@ export const projects = sqliteTable('projects', {
   name: text('name').notNull(),
   description: text('description'),
   status: text('status').notNull().default('active'),
+  /** JSON StoryDesign | null: impianto narrativo McKee (genere, tema, mondo) condiviso dal cast. */
+  story: text('story'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -474,3 +481,52 @@ export const userPreferences = sqliteTable('user_preferences', {
     .notNull()
     .default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`),
 });
+
+/* ------------------------------------------------------------------ */
+/* Coach McKee (PERSONA 2)                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Conversazioni tra l'autore e il coach McKee su un personaggio. Non sono parlato del
+ * personaggio: non entrano nel recupero, nelle memorie né negli estratti.
+ */
+export const coachThreads = sqliteTable(
+  'coach_threads',
+  {
+    id: text('id').primaryKey(),
+    characterId: text('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    /** Progetto (storia) di riferimento per cast e genere; null = nessuno. */
+    projectId: text('project_id').references(() => projects.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('coach_threads_character_idx').on(t.characterId)],
+);
+
+export const coachMessages = sqliteTable(
+  'coach_messages',
+  {
+    id: text('id').primaryKey(),
+    threadId: text('thread_id')
+      .notNull()
+      .references(() => coachThreads.id, { onDelete: 'cascade' }),
+    seq: integer('seq').notNull(),
+    /** author | coach */
+    role: text('role').notNull(),
+    content: text('content').notNull(),
+    reasoning: text('reasoning'),
+    /** Stazione su cui l'autore stava lavorando. */
+    section: text('section'),
+    /** JSON CoachProposal[] (proposte validate, con stato). */
+    proposals: text('proposals'),
+    /** JSON CoachMessageMeta (modello, passaggi del libro, istantanea). */
+    meta: text('meta'),
+    /** complete | incomplete | error */
+    status: text('status').notNull().default('complete'),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('coach_messages_thread_seq_idx').on(t.threadId, t.seq)],
+);

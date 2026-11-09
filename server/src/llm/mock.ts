@@ -43,6 +43,23 @@ export class MockProvider implements LlmProvider {
         return `Riassunto simulato. ${firstWords(lastUser, 40)}`;
       case 'consistency':
         return JSON.stringify({ issues: [] });
+      case 'coach': {
+        // Coach McKee: prosa + blocco di proposte (una valida, una lista, una non valida, un membro del cast).
+        const focus = system.match(/^The writer is on station (\d+) /m)?.[1];
+        const book = (system.match(/^\[\d+\] /gm) ?? []).length;
+        const transcript = system.includes('# TRANSCRIPT TO DISTILL');
+        const lang = system.match(/^The writer uses PERSONA in .*?\((\w+)\)/m)?.[1] ?? 'en';
+        const proposals = {
+          summary: 'Proposta simulata',
+          updates: [
+            { path: 'inner.superObjective', op: 'set', value: firstWords(lastUser, 8), rationale: 'mock' },
+            { path: 'dimensions', op: 'append', value: { id: 'dim_mock', positive: 'Leale', negative: 'Traditrice', defining: true } },
+            { path: 'no.such.path', value: 'x' },
+          ],
+          cast: [{ name: 'Mock Foil', roleLabel: 'Foil', circle: 'first', specialRoles: ['foil'], draws: 'loyalty', reason: 'mock' }],
+        };
+        return `[coach] Risposta simulata (lingua: ${lang}; stazione: ${focus ?? '—'}; passaggi del libro: ${book}${transcript ? '; trascrizione' : ''}). Hai detto: «${firstWords(lastUser, 12)}».\n<proposals>${JSON.stringify(proposals)}</proposals>`;
+      }
       case 'turn': {
         // Sceglie il partecipante nominato nell'ultima battuta (diverso dall'ultimo a parlare), altrimenti il primo disponibile.
         const names = [...lastUser.matchAll(/^- (.+?) \|/gm)].map((m) => m[1].trim());

@@ -7,10 +7,10 @@ import { AppError } from './util.js';
  * Se il client si disconnette, l'operazione viene annullata tramite AbortSignal:
  * il testo parziale resta comunque salvato dal servizio.
  */
-export async function streamResponse(
+export async function streamResponse<E extends { type: string } = StreamEvent>(
   request: FastifyRequest,
   reply: FastifyReply,
-  run: (sink: { send(e: StreamEvent): void }, signal: AbortSignal) => Promise<void>,
+  run: (sink: { send(e: E): void }, signal: AbortSignal) => Promise<void>,
 ): Promise<void> {
   const controller = new AbortController();
   reply.hijack();
@@ -26,7 +26,7 @@ export async function streamResponse(
     if (!ended) controller.abort(new Error('client disconnected'));
   });
   const sink = {
-    send(e: StreamEvent) {
+    send(e: E) {
       if (res.writableEnded || res.destroyed) return;
       res.write(`event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`);
     },
@@ -37,7 +37,7 @@ export async function streamResponse(
     const code = err instanceof AppError ? err.code : 'internal';
     const message = (err as Error)?.message ?? String(err);
     if (!(err instanceof AppError)) request.log.error(err);
-    sink.send({ type: 'error', error: { code, message }, message: null });
+    sink.send({ type: 'error', error: { code, message }, message: null } as unknown as E);
   } finally {
     ended = true;
     if (!res.writableEnded) res.end();

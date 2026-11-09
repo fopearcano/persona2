@@ -198,6 +198,8 @@ const snapshotSchema = characterProfileSchema.extend({
   traits: z.array(traitInputSchema).default([]),
   languages: z.array(languageInputSchema).default([]),
   expertise: z.array(expertiseInputSchema).default([]),
+  /** Costruzione McKee (PERSONA 2); assente nei file di PERSONA 1. */
+  build: z.unknown().optional(),
 });
 
 const importSchema = z.object({
