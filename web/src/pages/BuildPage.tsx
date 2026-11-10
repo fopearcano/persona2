@@ -21,17 +21,29 @@ import {
 } from '@persona/shared/mckee';
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, BookOpen, ChartPie, FileText, Info, Printer, Save, Sparkles } from 'lucide-react';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import { qk, useBuildContext, useCharacter, useInvalidate } from '../api/hooks';
 import { ChecksList } from '../components/mckee/Checks';
 import { CoachPanel, type CoachRequest } from '../components/mckee/CoachPanel';
+import { GuidePanel, GuideRail } from '../components/mckee/GuidePanel';
 import { FieldView, fieldVisible, type FieldCtx } from '../components/mckee/Fields';
 import { ProgressRing, StationBars, StationVisual, VizCard, type VizCtx } from '../components/mckee/Viz';
-import { Badge, Button, Checkbox, cx, ErrorBox, Input, Select, Spinner, useErrorText } from '../components/ui';
-import { downloadText, slugify, storyOf, toMcKee, useMckee } from '../lib/mckee';
+import { Badge, Button, Checkbox, cx, ErrorBox, Input, Segmented, Select, Spinner, useErrorText } from '../components/ui';
+import {
+  applyCapture,
+  downloadText,
+  identityDraftOf,
+  slugify,
+  storyOf,
+  toMcKee,
+  undoCapture,
+  useMckee,
+  type CaptureUndo,
+  type IdentityDraft,
+} from '../lib/mckee';
 import { useActiveProject } from '../lib/project';
 import { useUi } from '../stores/ui';
 import { Portrait } from './CharactersPage';
@@ -45,12 +57,22 @@ export function BuildPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const stationId = params.get('station') ?? 'spark';
+  // Vista "chat": l'assistente costruisce il personaggio conversando (stessa API del coach, modalità guide).
+  const chatView = params.get('view') === 'chat';
   const { projectId: activeProjectId } = useActiveProject();
   const [projectId, setProjectId] = useState<string | null>(params.get('project') ?? activeProjectId);
   const { data: character, isLoading, error } = useCharacter(id);
   const { data: bctx } = useBuildContext(id, projectId);
   const [draft, setDraft] = useState<CharacterBuild | null>(null);
   const [original, setOriginal] = useState<CharacterBuild | null>(null);
+  // Campi dell'identità che l'assistente può compilare: salvati insieme alla costruzione.
+  const [identity, setIdentity] = useState<IdentityDraft>({});
+  const [identityOriginal, setIdentityOriginal] = useState<IdentityDraft>({});
+  const [guideFocus, setGuideFocus] = useState<string | null>(null);
+  const draftRef = useRef<CharacterBuild | null>(null);
+  const identityRef = useRef<IdentityDraft>({});
+  draftRef.current = draft;
+  identityRef.current = identity;
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [coachOpen, setCoachOpen] = useState(false);
@@ -64,6 +86,8 @@ export function BuildPage() {
     if (character) {
       setDraft(character.build);
       setOriginal(character.build);
+      setIdentity(identityDraftOf(character));
+      setIdentityOriginal(identityDraftOf(character));
     }
   }, [character]);
 
@@ -82,7 +106,8 @@ export function BuildPage() {
     );
   }, [params, character, setParams, t]);
 
-  const dirty = !!draft && !!original && JSON.stringify(draft) !== JSON.stringify(original);
+  const identityChanges = Object.fromEntries(Object.entries(identity).filter(([k, v]) => (v ?? '') !== (identityOriginal[k] ?? '')));
+  const dirty = (!!draft && !!original && JSON.stringify(draft) !== JSON.stringify(original)) || Object.keys(identityChanges).length > 0;
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -102,18 +127,48 @@ export function BuildPage() {
     setParams(
       (p) => {
         p.set('station', station);
+        p.delete('view');
         return p;
       },
       { replace: true },
     );
     document.getElementById('main')?.scrollTo({ top: 0 });
   };
+  const setView = (view: 'fields' | 'chat') =>
+    setParams(
+      (p) => {
+        if (view === 'chat') {
+          p.set('view', 'chat');
+          if (p.get('station') === PROFILE) p.delete('station');
+        } else p.delete('view');
+        return p;
+      },
+      { replace: true },
+    );
+
+  /** Applica alla bozza ciò che l'assistente ha raccolto; restituisce come annullarlo. */
+  const capture = (updates: CoachUpdate[]): CaptureUndo => {
+    const r = applyCapture(draftRef.current!, identityRef.current, updates);
+    draftRef.current = r.build;
+    identityRef.current = r.identity;
+    setDraft(r.build);
+    setIdentity(r.identity);
+    return r.undo;
+  };
+  const uncapture = (undo: CaptureUndo) => {
+    const r = undoCapture(draftRef.current!, identityRef.current, undo);
+    draftRef.current = r.build;
+    identityRef.current = r.identity;
+    setDraft(r.build);
+    setIdentity(r.identity);
+  };
 
   const save = async () => {
     if (!draft || !id) return;
     setSaving(true);
     try {
-      const updated = await api.put<Character>(`/api/characters/${id}/build`, { build: draft, revisionReason: reason || null });
+      const profile = Object.keys(identityChanges).length ? identityChanges : undefined;
+      const updated = await api.put<Character>(`/api/characters/${id}/build`, { build: draft, profile, revisionReason: reason || null });
       qc.setQueryData(qk.character(id), updated);
       setReason('');
       toast(t('editor.savedVersion', { version: updated.identityVersion }), 'success');
@@ -176,7 +231,8 @@ export function BuildPage() {
   };
 
   const section = M.SECTION_BY_ID[stationId];
-  const isProfile = stationId === PROFILE || !section;
+  const isProfile = !chatView && (stationId === PROFILE || !section);
+  const displayName = identity.name?.trim() || character.name;
 
   return (
     <div className="flex h-full flex-col">
@@ -185,9 +241,9 @@ export function BuildPage() {
           <Link to={`/characters/${character.id}`} className="text-muted hover:text-text" aria-label={t('common.back')}>
             <ArrowLeft className="size-4" />
           </Link>
-          <Portrait name={character.name} src={character.portrait} size="sm" />
+          <Portrait name={displayName} src={character.portrait} size="sm" />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold">{character.name}</h1>
+            <h1 className="truncate text-base font-semibold">{displayName}</h1>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
               <span>{t('mckee.build.title')}</span>
               <span>·</span>
@@ -224,13 +280,24 @@ export function BuildPage() {
           <div title={t('mckee.build.useInContextHelp')}>
             <Checkbox label={<span className="text-xs">{t('mckee.build.useInContext')}</span>} checked={draft.useInContext} onChange={(v) => edit((d) => void (d.useInContext = v))} />
           </div>
+          <Segmented<'fields' | 'chat'>
+            label={t('mckee.guide.viewLabel')}
+            value={chatView ? 'chat' : 'fields'}
+            onChange={setView}
+            options={[
+              { id: 'fields', label: t('mckee.guide.viewFields') },
+              { id: 'chat', label: t('mckee.guide.viewChat'), title: t('mckee.guide.viewChatHelp') },
+            ]}
+          />
           <div className="flex flex-wrap items-center gap-1.5">
             <Button size="sm" variant={isProfile ? 'primary' : 'secondary'} icon={<ChartPie className="size-3.5" />} onClick={() => go(isProfile ? 'spark' : PROFILE)}>
               {isProfile ? t('mckee.build.stations') : t('mckee.build.profile')}
             </Button>
-            <Button size="sm" variant={coachOpen ? 'primary' : 'secondary'} icon={<Sparkles className="size-3.5" />} onClick={() => setCoachOpen((o) => !o)}>
-              {t('mckee.build.coach')}
-            </Button>
+            {!chatView && (
+              <Button size="sm" variant={coachOpen ? 'primary' : 'secondary'} icon={<Sparkles className="size-3.5" />} onClick={() => setCoachOpen((o) => !o)}>
+                {t('mckee.build.coach')}
+              </Button>
+            )}
             <Input className="h-7! w-56! text-xs" value={reason} placeholder={t('mckee.build.reason')} aria-label={t('mckee.build.reason')} onChange={(e) => setReason(e.target.value)} />
             <Button size="sm" variant="primary" icon={<Save className="size-3.5" />} loading={saving} disabled={!dirty} onClick={save}>
               {t('common.save')}
@@ -239,6 +306,26 @@ export function BuildPage() {
         </div>
       </header>
 
+      {chatView ? (
+        <div className="flex min-h-0 flex-1">
+          <main className="flex min-w-0 flex-1 flex-col">
+            <GuidePanel
+              characterId={character.id}
+              name={displayName}
+              draft={draft}
+              identity={identity}
+              projectId={bctx?.project?.id ?? null}
+              focus={guideFocus}
+              M={M}
+              onCapture={capture}
+              onUndo={uncapture}
+            />
+          </main>
+          <aside aria-label={t('mckee.guide.progress')} className="hidden w-72 shrink-0 overflow-auto border-l border-border md:block print:hidden">
+            <GuideRail draft={draft} identity={identity} characterId={character.id} story={story} focus={guideFocus} M={M} onFocus={setGuideFocus} onOpenFields={go} />
+          </aside>
+        </div>
+      ) : (
       <div className="flex min-h-0 flex-1">
         {!isProfile && (
           <nav aria-label={t('mckee.build.stations')} className="hidden w-56 shrink-0 overflow-auto border-r border-border p-2 lg:block print:hidden">
@@ -331,8 +418,9 @@ export function BuildPage() {
           </aside>
         )}
       </div>
+      )}
       {/* Su schermi stretti il coach si apre sopra il contenuto. */}
-      {coachOpen && !isProfile && (
+      {coachOpen && !isProfile && !chatView && (
         <div className="fixed inset-0 z-40 flex flex-col bg-bg md:hidden">
           <CoachPanel
             characterId={character.id}

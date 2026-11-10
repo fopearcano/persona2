@@ -217,7 +217,7 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get<{ Querystring: Q }>('/api/book/search', async (req) => book.searchBookRoute(ctx, req.query));
 
   /* ---------------- Coach McKee ---------------- */
-  app.get<{ Params: Params }>('/api/characters/:id/coach', async (req) => coach.listThreads(ctx, req.params.id));
+  app.get<{ Params: Params; Querystring: Q }>('/api/characters/:id/coach', async (req) => coach.listThreads(ctx, req.params.id, req.query.mode));
   app.post<{ Params: Params }>('/api/characters/:id/coach', async (req, reply) => {
     return streamResponse<CoachStreamEvent>(req, reply, (sink, signal) => coach.sendCoachMessage(ctx, req.params.id, req.body, sink, signal));
   });

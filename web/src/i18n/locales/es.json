@@ -907,6 +907,36 @@
       "noProjects": "Crea un proyecto para diseñar su historia y su reparto.",
       "saved": "Diseño de la historia guardado.",
       "open": "Historia y reparto"
+    },
+    "guide": {
+      "title": "Asistente de construcción",
+      "threads": "Entrevistas de construcción",
+      "newThread": "Nueva entrevista",
+      "emptyTitle": "Construye a {{name}} conversando",
+      "emptyIntro": "Responde a las preguntas del asistente: sigue las dieciséis estaciones de McKee una a una y convierte cada respuesta en campos de la construcción y de la identidad (nombre, edad, profesión, biografía…). Los cambios aparecen enseguida en el borrador y puedes deshacerlos uno a uno.",
+      "emptyFree": "O cuenta libremente quién es: un solo párrafo rellena muchos campos. Cuando estés satisfecho, guarda: se crea una nueva versión de la identidad.",
+      "start": "Empezar la entrevista",
+      "startPrompt": "Empecemos: guíame en la construcción de {{name}}.",
+      "placeholder": "Responde o describe el personaje (Intro para enviar, Mayús+Intro para nueva línea)",
+      "captured_one": "{{count}} campo rellenado",
+      "captured_other": "{{count}} campos rellenados",
+      "undone": "Deshecho",
+      "undo": "Deshacer",
+      "progress": "Progreso",
+      "working": "Estación en curso: {{station}}",
+      "complete": "Todas las estaciones previstas tienen contenido: profundiza o guarda.",
+      "autoFocus": "Elección del asistente",
+      "focusHelp": "Elige una estación para que el asistente hable de ella.",
+      "identity": "Identidad básica",
+      "openFields": "Ver y editar los campos",
+      "viewLabel": "Modo de construcción",
+      "viewFields": "Campos",
+      "viewChat": "Chat",
+      "viewChatHelp": "Construye el personaje conversando con el asistente",
+      "createByChat": "Crear conversando",
+      "createIntro": "Ponle un nombre al personaje: el resto lo construyes conversando con el asistente, que sigue el método de McKee y rellena los campos por ti. Usa el motor predeterminado (Ajustes → Motores LLM).",
+      "namePlaceholder": "p. ej. Mara Voss",
+      "startChat": "Empezar a conversar"
     }
   }
 }

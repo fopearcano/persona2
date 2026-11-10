@@ -907,6 +907,36 @@
       "noProjects": "Create a project to design its story and cast.",
       "saved": "Story design saved.",
       "open": "Story & cast"
+    },
+    "guide": {
+      "title": "Building assistant",
+      "threads": "Building interviews",
+      "newThread": "New interview",
+      "emptyTitle": "Build {{name}} by chatting",
+      "emptyIntro": "Answer the assistant's questions: it follows McKee's sixteen stations one at a time and turns every answer into fields of the build and the identity (name, age, occupation, biography…). Changes appear in the draft at once and you can undo them one by one.",
+      "emptyFree": "Or just tell who they are: a single paragraph fills many fields. When you are happy, save: a new identity version is created.",
+      "start": "Start the interview",
+      "startPrompt": "Let's begin: guide me through building {{name}}.",
+      "placeholder": "Answer or describe the character (Enter to send, Shift+Enter for a new line)",
+      "captured_one": "{{count}} field filled",
+      "captured_other": "{{count}} fields filled",
+      "undone": "Undone",
+      "undo": "Undo",
+      "progress": "Progress",
+      "working": "Current station: {{station}}",
+      "complete": "Every expected station has content: go deeper or save.",
+      "autoFocus": "Assistant's choice",
+      "focusHelp": "Pick a station for the assistant to talk about.",
+      "identity": "Basic identity",
+      "openFields": "See and edit the fields",
+      "viewLabel": "Building mode",
+      "viewFields": "Fields",
+      "viewChat": "Chat",
+      "viewChatHelp": "Build the character by chatting with the assistant",
+      "createByChat": "Create by chatting",
+      "createIntro": "Give the character a name: you build the rest by chatting with the assistant, which follows McKee's method and fills the fields for you. It uses the default engine (Settings → LLM engines).",
+      "namePlaceholder": "e.g. Mara Voss",
+      "startChat": "Start chatting"
     }
   }
 }

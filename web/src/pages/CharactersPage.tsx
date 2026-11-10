@@ -1,11 +1,12 @@
-import type { CharacterExportV1, CharacterSummary } from '@persona/shared/client';
-import { Archive, ArchiveRestore, Copy, Download, FolderMinus, FolderPlus, GitBranch, Hammer, MessagesSquare, Plus, Trash2, Upload } from 'lucide-react';
+import type { Character, CharacterExportV1, CharacterSummary } from '@persona/shared/client';
+import { NO_PROJECT } from '@persona/shared/client';
+import { Archive, ArchiveRestore, Copy, Download, FolderMinus, FolderPlus, GitBranch, Hammer, MessagesSquare, Plus, Sparkles, Trash2, Upload } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { api, downloadUrl } from '../api/client';
 import { useCharacters, useInvalidate } from '../api/hooks';
-import { Badge, Button, Checkbox, EmptyState, ErrorBox, IconButton, Input, Modal, PageHeader, Segmented, Spinner, useErrorText } from '../components/ui';
+import { Badge, Button, Checkbox, EmptyState, ErrorBox, IconButton, Input, Modal, PageHeader, Segmented, Spinner, TextField, useErrorText } from '../components/ui';
 import { formatRelative, initials, languageLabel } from '../lib/format';
 import { useActiveProject, useRemoveFromProject } from '../lib/project';
 import { useUi } from '../stores/ui';
@@ -42,6 +43,7 @@ export function CharactersPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [importOpts, setImportOpts] = useState({ memories: true, conversations: true, knowledge: true });
   const [importing, setImporting] = useState(false);
+  const [chatting, setChatting] = useState(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -104,6 +106,9 @@ export function CharactersPage() {
                 {t('projects.addExisting')}
               </Button>
             )}
+            <Button icon={<Sparkles className="size-4" />} onClick={() => setChatting(true)}>
+              {t('mckee.guide.createByChat')}
+            </Button>
             <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => navigate('/characters/new')}>
               {t('characters.new')}
             </Button>
@@ -136,6 +141,9 @@ export function CharactersPage() {
                       {t('projects.addExisting')}
                     </Button>
                   )}
+                  <Button icon={<Sparkles className="size-4" />} onClick={() => setChatting(true)}>
+                    {t('mckee.guide.createByChat')}
+                  </Button>
                   <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => navigate('/characters/new')}>
                     {t('characters.new')}
                   </Button>
@@ -234,6 +242,7 @@ export function CharactersPage() {
           ))}
         </ul>
       </div>
+      <CreateByChatModal open={chatting} onClose={() => setChatting(false)} projectId={projectId} />
       {project && <AddExistingModal open={adding} onClose={() => setAdding(false)} projectId={project.id} projectNames={projectNames} />}
       <Modal open={importOpen} onClose={() => setImportOpen(false)} title={t('characters.importTitle')}>
         <div className="flex flex-col gap-3">
@@ -357,6 +366,56 @@ function AddExistingModal({
           ))}
         </ul>
       )}
+    </Modal>
+  );
+}
+
+/**
+ * Nuovo personaggio costruito chattando: basta un nome (obbligatorio per l'identità);
+ * il resto lo raccoglie l'assistente di costruzione nella vista chat della Costruzione McKee.
+ */
+function CreateByChatModal({ open, onClose, projectId }: { open: boolean; onClose(): void; projectId: string | null }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const invalidate = useInvalidate();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const create = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api.post<Character>('/api/characters', { name: name.trim(), projectId: projectId && projectId !== NO_PROJECT ? projectId : null });
+      await invalidate('characters', 'projects');
+      setName('');
+      onClose();
+      navigate(`/characters/${created.id}/build?view=chat`);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal open={open} onClose={onClose} title={t('mckee.guide.createByChat')}>
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void create();
+        }}
+      >
+        <p className="text-sm text-muted">{t('mckee.guide.createIntro')}</p>
+        <TextField label={t('editor.fields.name')} value={name} onChange={setName} placeholder={t('mckee.guide.namePlaceholder')} />
+        {error ? <ErrorBox error={error} /> : null}
+        <div className="flex justify-end gap-2">
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" variant="primary" loading={busy} disabled={!name.trim()} icon={<Sparkles className="size-4" />}>
+            {t('mckee.guide.startChat')}
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 }

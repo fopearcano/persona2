@@ -186,6 +186,30 @@ function tinyEpub() {
     await page.getByText(/trascrizione/).first().waitFor({ timeout: 10000 });
     await page.screenshot({ path: `${SHOTS}/mckee-distill.png` });
   });
+  await step('create a character by chatting', async () => {
+    await page.goto(BASE + '/characters');
+    await page.getByRole('button', { name: 'Crea chattando' }).first().click();
+    await page.getByLabel('Nome completo').fill('Teo Ricci');
+    await page.getByRole('button', { name: 'Inizia a chattare' }).click();
+    await page.getByRole('heading', { name: 'Costruisci Teo Ricci chattando' }).waitFor({ timeout: 5000 });
+    await page.getByRole('button', { name: "Inizia l'intervista" }).click();
+    await page.getByText('2 campi compilati').first().waitFor({ timeout: 10000 });
+    const input = page.getByPlaceholder(/Rispondi o racconta il personaggio/);
+    await input.fill('Un faro abbandonato e un guardiano che non dorme mai');
+    await input.press('Enter');
+    await page.getByText('2 campi compilati').nth(1).waitFor({ timeout: 10000 });
+    await page.screenshot({ path: `${SHOTS}/mckee-chat.png` });
+    // Annulla l'ultima cattura: torna il valore della prima risposta.
+    await page.getByRole('button', { name: 'Annulla' }).last().click();
+    await page.getByText('Annullato').waitFor();
+    await page.getByRole('button', { name: 'Salva', exact: true }).click();
+    await page.getByText(/versione identità 2/).first().waitFor({ timeout: 5000 });
+    const list = await api('GET', '/api/characters');
+    const teo = list.find((c) => c.name === 'Teo Ricci');
+    const full = await api('GET', `/api/characters/${teo.id}`);
+    if (full.occupation !== 'Biologa marina') throw new Error(`occupation: ${full.occupation}`);
+    if (!full.build.concept.logline.startsWith('Iniziamo')) throw new Error(`logline: ${full.build.concept.logline}`);
+  });
   await step('english interface', async () => {
     await page.evaluate(() => localStorage.setItem('persona.uiLanguage', 'en'));
     await api('PUT', '/api/preferences', { uiLanguage: 'en' });

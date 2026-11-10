@@ -907,6 +907,36 @@
       "noProjects": "Lege ein Projekt an, um seine Geschichte und Besetzung zu entwerfen.",
       "saved": "Anlage der Geschichte gespeichert.",
       "open": "Geschichte und Besetzung"
+    },
+    "guide": {
+      "title": "Aufbau-Assistent",
+      "threads": "Aufbau-Interviews",
+      "newThread": "Neues Interview",
+      "emptyTitle": "{{name}} im Gespräch aufbauen",
+      "emptyIntro": "Beantworte die Fragen des Assistenten: Er folgt McKees sechzehn Stationen nacheinander und macht aus jeder Antwort Felder des Aufbaus und der Identität (Name, Alter, Beruf, Biografie …). Änderungen erscheinen sofort im Entwurf und lassen sich einzeln rückgängig machen.",
+      "emptyFree": "Oder erzähl einfach, wer die Figur ist: ein einziger Absatz füllt viele Felder. Wenn du zufrieden bist, speichere: Es entsteht eine neue Identitätsversion.",
+      "start": "Interview beginnen",
+      "startPrompt": "Fangen wir an: Führe mich durch den Aufbau von {{name}}.",
+      "placeholder": "Antworte oder beschreibe die Figur (Eingabe zum Senden, Umschalt+Eingabe für neue Zeile)",
+      "captured_one": "{{count}} Feld ausgefüllt",
+      "captured_other": "{{count}} Felder ausgefüllt",
+      "undone": "Rückgängig gemacht",
+      "undo": "Rückgängig",
+      "progress": "Fortschritt",
+      "working": "Aktuelle Station: {{station}}",
+      "complete": "Alle erwarteten Stationen haben Inhalt: vertiefe oder speichere.",
+      "autoFocus": "Wahl des Assistenten",
+      "focusHelp": "Wähle eine Station, über die der Assistent sprechen soll.",
+      "identity": "Grundidentität",
+      "openFields": "Felder ansehen und bearbeiten",
+      "viewLabel": "Aufbaumodus",
+      "viewFields": "Felder",
+      "viewChat": "Chat",
+      "viewChatHelp": "Die Figur im Gespräch mit dem Assistenten aufbauen",
+      "createByChat": "Im Gespräch erstellen",
+      "createIntro": "Gib der Figur einen Namen: Den Rest baust du im Gespräch mit dem Assistenten auf, der McKees Methode folgt und die Felder für dich ausfüllt. Er nutzt die Standard-Engine (Einstellungen → LLM-Engines).",
+      "namePlaceholder": "z. B. Mara Voss",
+      "startChat": "Gespräch beginnen"
     }
   }
 }

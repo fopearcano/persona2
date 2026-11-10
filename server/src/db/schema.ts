@@ -499,6 +499,8 @@ export const coachThreads = sqliteTable(
       .references(() => characters.id, { onDelete: 'cascade' }),
     /** Progetto (storia) di riferimento per cast e genere; null = nessuno. */
     projectId: text('project_id').references(() => projects.id, { onDelete: 'set null' }),
+    /** coach = consulente; guide = assistente che costruisce il personaggio chattando. */
+    mode: text('mode').notNull().default('coach'),
     title: text('title').notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

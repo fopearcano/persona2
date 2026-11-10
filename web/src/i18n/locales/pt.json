@@ -907,6 +907,36 @@
       "noProjects": "Cria um projeto para conceber a sua história e o seu elenco.",
       "saved": "Conceção da história guardada.",
       "open": "História e elenco"
+    },
+    "guide": {
+      "title": "Assistente de construção",
+      "threads": "Entrevistas de construção",
+      "newThread": "Nova entrevista",
+      "emptyTitle": "Constrói {{name}} a conversar",
+      "emptyIntro": "Responde às perguntas do assistente: segue as dezasseis estações de McKee uma a uma e transforma cada resposta em campos da construção e da identidade (nome, idade, profissão, biografia…). As alterações aparecem logo no rascunho e podes anulá-las uma a uma.",
+      "emptyFree": "Ou conta livremente quem é: um único parágrafo preenche muitos campos. Quando estiveres satisfeito, guarda: cria-se uma nova versão da identidade.",
+      "start": "Começar a entrevista",
+      "startPrompt": "Vamos começar: guia-me na construção de {{name}}.",
+      "placeholder": "Responde ou descreve a personagem (Enter para enviar, Shift+Enter para nova linha)",
+      "captured_one": "{{count}} campo preenchido",
+      "captured_other": "{{count}} campos preenchidos",
+      "undone": "Anulado",
+      "undo": "Anular",
+      "progress": "Progresso",
+      "working": "Estação em curso: {{station}}",
+      "complete": "Todas as estações previstas têm conteúdo: aprofunda ou guarda.",
+      "autoFocus": "Escolha do assistente",
+      "focusHelp": "Escolhe uma estação para o assistente falar dela.",
+      "identity": "Identidade básica",
+      "openFields": "Ver e editar os campos",
+      "viewLabel": "Modo de construção",
+      "viewFields": "Campos",
+      "viewChat": "Chat",
+      "viewChatHelp": "Constrói a personagem a conversar com o assistente",
+      "createByChat": "Criar a conversar",
+      "createIntro": "Dá um nome à personagem: o resto constróis a conversar com o assistente, que segue o método de McKee e preenche os campos por ti. Usa o motor predefinido (Definições → Motores LLM).",
+      "namePlaceholder": "ex. Mara Voss",
+      "startChat": "Começar a conversar"
     }
   }
 }

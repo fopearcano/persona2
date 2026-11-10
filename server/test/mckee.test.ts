@@ -27,7 +27,7 @@ import {
 } from '@persona/shared/mckee';
 import { deflateRawSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ProposalStreamFilter, splitProposals } from '../src/services/coach.js';
+import { coachPrompt, ProposalStreamFilter, splitProposals } from '../src/services/coach.js';
 import { createCharacter, createTestEnv, send, type TestEnv } from './helpers.js';
 
 let env: TestEnv;
@@ -76,6 +76,20 @@ describe('McKee shared module', () => {
     const next = applyUpdates(b, r.ok ? [r.update] : []);
     expect(next.dimensions).toHaveLength(1);
     expect(b.dimensions).toHaveLength(0); // l'originale non cambia
+  });
+
+  it('accepts identity fields only for the building assistant', () => {
+    const b = newBuild();
+    expect(validateUpdate({ path: 'identity.occupation', value: 'Pilota' }, {}).ok).toBe(false);
+    const ctx = { ...updateContext(b, 'me', []), allowIdentity: true };
+    expect(validateUpdate({ path: 'identity.occupation', value: ' Pilota ' }, ctx)).toMatchObject({ ok: true, update: { value: 'Pilota' } });
+    expect(validateUpdate({ path: 'identity.name', value: '' }, ctx).ok).toBe(false);
+    expect(validateUpdate({ path: 'identity.portrait', value: 'x' }, ctx).ok).toBe(false);
+    expect(validateUpdate({ path: 'identity.age', op: 'append', value: '3' }, ctx).ok).toBe(false);
+    // applyUpdates lascia stare l'identità: la applica il browser alla bozza.
+    const next = applyUpdates(b, [{ path: 'identity.age', op: 'set', value: '40' }, { path: 'notes', op: 'set', value: 'n' }]);
+    expect(next.notes).toBe('n');
+    expect((next as unknown as Record<string, unknown>).identity).toBeUndefined();
   });
 
   it('normalizes untrusted builds and drops prototype keys', () => {
@@ -375,5 +389,85 @@ describe('McKee coach', () => {
     const threads = await get<{ id: string }[]>(`/api/characters/${c.id}/coach`);
     const detail = await get<CoachThreadDetail>(`/api/coach/threads/${threads[0].id}`);
     expect(detail.messages[0].role).toBe('author');
+  });
+});
+
+describe('building assistant (guided mode)', () => {
+  it('builds the prompt around the next station and the unsaved identity', async () => {
+    const c = await createCharacter(env, { occupation: null });
+    const build = newBuild();
+    build.cast.circle = 'third'; // ruolo minore: poche tappe attese
+    const p = coachPrompt(env.ctx, {
+      mode: 'guide',
+      identity: { name: c.name, occupation: 'Pilota di linea' },
+      draft: build,
+      characterId: c.id,
+      name: c.name,
+      projectId: null,
+      section: null,
+      uiLanguage: 'it',
+      bookPassages: [],
+      transcript: null,
+      history: [],
+      content: 'Iniziamo',
+      contextLength: 32768,
+      maxTokens: 1024,
+    });
+    const system = p.messages[0].content;
+    expect(system).toContain('GUIDED BUILD');
+    expect(system).toContain('Focus station: 01 "The Spark"');
+    expect(system).toContain('- concept.nickname — Nickname / alias');
+    expect(system).toContain('Occupation: Pilota di linea');
+    expect(system).toContain('identity.biography — Biography — text');
+    // Solo le tappe attese per un ruolo del terzo cerchio.
+    expect(system).toContain('03 Explicit Traits [explicit]');
+    expect(system).not.toContain('09 Dimensions [dimensions]: ');
+  });
+
+  it('streams a guided turn and returns identity and build captures', async () => {
+    const c = await createCharacter(env);
+    const events = parseCoach(
+      (
+        await env.app.inject({
+          method: 'POST',
+          url: `/api/characters/${c.id}/coach`,
+          payload: { mode: 'guide', content: 'Una biologa marina che torna al suo paese', uiLanguage: 'it', identityDraft: { occupation: null } },
+        })
+      ).body,
+    );
+    const thread = (events.find((e) => e.type === 'thread') as Extract<CoachStreamEvent, { type: 'thread' }>).thread;
+    expect(thread.mode).toBe('guide');
+    const visible = events.filter((e) => e.type === 'delta').map((e) => (e as { text: string }).text).join('');
+    expect(visible).toContain('[guida]');
+    expect(visible).toContain('Tappa 01; prossimo campo: concept.nickname');
+    expect(visible).not.toContain('<proposals>');
+    const done = events.find((e) => e.type === 'done') as Extract<CoachStreamEvent, { type: 'done' }>;
+    const [p] = done.message.proposals;
+    expect(p.updates.map((u) => u.path)).toEqual(['concept.logline', 'identity.occupation']);
+    expect(p.updates[1].value).toBe('Biologa marina');
+    expect(p.rejected).toHaveLength(2);
+
+    // I fili sono separati per modalità.
+    expect((await get<{ id: string }[]>(`/api/characters/${c.id}/coach?mode=guide`)).map((x) => x.id)).toEqual([thread.id]);
+    expect(await get<unknown[]>(`/api/characters/${c.id}/coach?mode=coach`)).toEqual([]);
+
+    // Un turno successivo nello stesso filo resta guidato anche senza ripetere la modalità.
+    const second = parseCoach((await env.app.inject({ method: 'POST', url: `/api/characters/${c.id}/coach`, payload: { threadId: thread.id, content: 'Vuole la verità' } })).body);
+    expect(second.filter((e) => e.type === 'delta').map((e) => (e as { text: string }).text).join('')).toContain('[guida]');
+  });
+
+  it('saves the build and the identity fields in one revision', async () => {
+    const c = await createCharacter(env);
+    const build = newBuild();
+    build.concept.logline = 'Una biologa che torna';
+    const res = await put(`/api/characters/${c.id}/build`, { build, profile: { name: 'Mara Voss', occupation: 'Biologa marina', biography: 'Nata sul mare.' }, revisionReason: 'Costruzione guidata' });
+    expect(res.statusCode, res.body).toBe(200);
+    const saved = res.json() as Character;
+    expect(saved.identityVersion).toBe(2);
+    expect(saved).toMatchObject({ name: 'Mara Voss', occupation: 'Biologa marina', biography: 'Nata sul mare.', origin: c.origin });
+    expect(saved.build.concept.logline).toBe('Una biologa che torna');
+    expect(saved.traits.length).toBe(c.traits.length);
+    const bad = await put(`/api/characters/${c.id}/build`, { build, profile: { name: '' } });
+    expect(bad.statusCode).toBe(400);
   });
 });

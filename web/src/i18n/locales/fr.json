@@ -907,6 +907,36 @@
       "noProjects": "Créez un projet pour en concevoir l'histoire et la distribution.",
       "saved": "Conception de l'histoire enregistrée.",
       "open": "Histoire et distribution"
+    },
+    "guide": {
+      "title": "Assistant de construction",
+      "threads": "Entretiens de construction",
+      "newThread": "Nouvel entretien",
+      "emptyTitle": "Construire {{name}} en discutant",
+      "emptyIntro": "Répondez aux questions de l'assistant : il suit les seize stations de McKee une à une et transforme chaque réponse en champs de la construction et de l'identité (nom, âge, profession, biographie…). Les modifications apparaissent aussitôt dans le brouillon et vous pouvez les annuler une à une.",
+      "emptyFree": "Ou racontez simplement qui il est : un seul paragraphe remplit de nombreux champs. Quand vous êtes satisfait, enregistrez : une nouvelle version de l'identité est créée.",
+      "start": "Commencer l'entretien",
+      "startPrompt": "Commençons : guide-moi dans la construction de {{name}}.",
+      "placeholder": "Répondez ou décrivez le personnage (Entrée pour envoyer, Maj+Entrée pour aller à la ligne)",
+      "captured_one": "{{count}} champ rempli",
+      "captured_other": "{{count}} champs remplis",
+      "undone": "Annulé",
+      "undo": "Annuler",
+      "progress": "Avancement",
+      "working": "Station en cours : {{station}}",
+      "complete": "Toutes les stations attendues ont un contenu : approfondissez ou enregistrez.",
+      "autoFocus": "Choix de l'assistant",
+      "focusHelp": "Choisissez une station dont l'assistant doit parler.",
+      "identity": "Identité de base",
+      "openFields": "Voir et modifier les champs",
+      "viewLabel": "Mode de construction",
+      "viewFields": "Champs",
+      "viewChat": "Chat",
+      "viewChatHelp": "Construire le personnage en discutant avec l'assistant",
+      "createByChat": "Créer en discutant",
+      "createIntro": "Donnez un nom au personnage : vous construisez le reste en discutant avec l'assistant, qui suit la méthode de McKee et remplit les champs pour vous. Il utilise le moteur par défaut (Paramètres → Moteurs LLM).",
+      "namePlaceholder": "ex. Mara Voss",
+      "startChat": "Commencer à discuter"
     }
   }
 }

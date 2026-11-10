@@ -136,8 +136,32 @@ export const projectInputSchema = z.object({
 
 /* ---------------- Costruzione McKee e coach ---------------- */
 
+/** Campi dell'identità che l'assistente di costruzione può compilare (vedi mckee/fields.ts IDENTITY_FIELDS). */
+export const buildProfilePatchSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    age: optText(100),
+    origin: optText(500),
+    culturalBackground: optText(),
+    occupation: optText(500),
+    education: optText(),
+    biography: optText(100000),
+    appearance: optText(),
+    temperament: optText(),
+    interpersonalStyle: optText(),
+    conflictResponse: optText(),
+    stressResponse: optText(),
+    register: optText(),
+    vocabulary: optText(),
+    humor: optText(),
+  })
+  .partial();
+export type BuildProfilePatch = z.input<typeof buildProfilePatchSchema>;
+
 export const buildSaveSchema = z.object({
   build: z.unknown(),
+  /** Campi dell'identità modificati insieme alla costruzione (stessa revisione). */
+  profile: buildProfilePatchSchema.optional(),
   revisionReason: optText(1000),
 });
 
@@ -147,7 +171,11 @@ export const castPlacementSchema = z.object({
   angle: z.number().finite().min(-10).max(10).nullable().default(null),
 });
 
+export const COACH_MODES = ['coach', 'guide'] as const;
+
 export const coachMessageSchema = z.object({
+  /** coach = consulente sulla costruzione; guide = assistente che costruisce il personaggio chattando. */
+  mode: z.enum(COACH_MODES).default('coach'),
   threadId: z.string().nullish().transform((v) => v ?? null),
   projectId: z.string().nullish().transform((v) => v ?? null),
   content: z.string().trim().min(1).max(20000),
@@ -155,6 +183,8 @@ export const coachMessageSchema = z.object({
   section: z.string().max(40).nullish().transform((v) => v ?? null),
   /** Costruzione corrente non ancora salvata (bozza dell'autore): il coach la vede così com'è. */
   draft: z.unknown().optional(),
+  /** Bozza dei campi dell'identità (nome, età, professione…) non ancora salvata. */
+  identityDraft: z.record(z.string(), z.string().max(100000).nullable()).optional(),
   uiLanguage: z.string().max(20).default('it'),
   /** Conversazione di PERSONA da distillare nella costruzione (esercizio del racconto di sé, Cap. 4). */
   transcriptConversationId: z.string().nullish().transform((v) => v ?? null),

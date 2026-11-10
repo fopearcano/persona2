@@ -124,8 +124,13 @@ export const useProjectCast = (projectId: string | null | undefined) =>
 
 export const useBook = () => useQuery({ queryKey: qk.book, queryFn: () => api.get<BookStatus>('/api/book') });
 
-export const useCoachThreads = (characterId: string | undefined) =>
-  useQuery({ queryKey: qk.coachThreads(characterId ?? ''), queryFn: () => api.get<CoachThread[]>(`/api/characters/${characterId}/coach`), enabled: !!characterId });
+/** `mode`: fili del coach o dell'assistente di costruzione. */
+export const useCoachThreads = (characterId: string | undefined, mode: 'coach' | 'guide' = 'coach') =>
+  useQuery({
+    queryKey: [...qk.coachThreads(characterId ?? ''), mode],
+    queryFn: () => api.get<CoachThread[]>(`/api/characters/${characterId}/coach?mode=${mode}`),
+    enabled: !!characterId,
+  });
 
 export const useCoachThread = (id: string | null | undefined) =>
   useQuery({ queryKey: qk.coachThread(id ?? ''), queryFn: () => api.get<CoachThreadDetail>(`/api/coach/threads/${id}`), enabled: !!id });

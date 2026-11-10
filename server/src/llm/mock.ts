@@ -43,6 +43,22 @@ export class MockProvider implements LlmProvider {
         return `Riassunto simulato. ${firstWords(lastUser, 40)}`;
       case 'consistency':
         return JSON.stringify({ issues: [] });
+      case 'guide': {
+        // Assistente di costruzione: riprende la risposta, compila i campi e fa la domanda successiva.
+        const focus = system.match(/^Focus station: (\d+) /m)?.[1] ?? '—';
+        const next = system.match(/^- (\S+) — /m)?.[1] ?? 'none';
+        const said = firstWords(lastUser, 12);
+        const proposals = {
+          summary: 'Dalla tua risposta',
+          updates: [
+            { path: 'concept.logline', value: said, rationale: 'parole dell\'autore' },
+            { path: 'identity.occupation', value: 'Biologa marina' },
+            { path: 'inner.motivations', value: { meaning: 8 } },
+            { path: 'identity.secret', value: 'x' },
+          ],
+        };
+        return `[guida] Ho annotato: «${said}». Tappa ${focus}; prossimo campo: ${next}. Che cosa desidera di più?\n<proposals>${JSON.stringify(proposals)}</proposals>`;
+      }
       case 'coach': {
         // Coach McKee: prosa + blocco di proposte (una valida, una lista, una non valida, un membro del cast).
         const focus = system.match(/^The writer is on station (\d+) /m)?.[1];

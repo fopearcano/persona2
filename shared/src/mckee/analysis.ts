@@ -84,6 +84,34 @@ export function sectionProgress(c: McKeeCharacter, sectionId: string, story?: St
   return { filled, total, ratio: total ? filled / total : 0 };
 }
 
+/**
+ * Campi ancora vuoti di una tappa (visibili per questo personaggio), con etichetta: servono
+ * all'assistente di costruzione per decidere che cosa chiedere.
+ */
+export function missingFields(c: McKeeCharacter, sectionId: string, story?: StoryDesign | null, M: McKeeData = mckeeData('en')): { path: string; label: string }[] {
+  const section = M.SECTION_BY_ID[sectionId];
+  if (!section) return [];
+  const seen = new Set<string>();
+  const out: { path: string; label: string }[] = [];
+  for (const f of sectionFields(section)) {
+    if (!fieldVisible(f, c, story) || f.component === 'genreInfo') continue;
+    const key = f.type === 'spectra' || f.type === 'sliders' ? `${f.path}:${(f.items ?? []).map((i) => i.id).join(',')}` : f.path;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (fieldFilled(f, c)) continue;
+    const label = f.label || M.K.EXPLICIT_TRAITS.find((x) => x.id === f.key)?.label || (f.items ?? []).map((i) => i.label).join(' / ') || f.path;
+    out.push({ path: f.path, label });
+  }
+  return out;
+}
+
+/** La tappa su cui proseguire: la prima attesa per il ruolo poco compilata (null se tutto è compilato). */
+export function nextStation(c: McKeeCharacter, story?: StoryDesign | null): string | null {
+  const progress = overallProgress(c, story);
+  const expected = expectedSections(c);
+  return expected.find((id) => progress.bySection[id].ratio < 0.5) ?? expected.find((id) => progress.bySection[id].ratio < 1) ?? null;
+}
+
 export function overallProgress(c: McKeeCharacter, story?: StoryDesign | null): Progress & { bySection: Record<string, Progress & { expected: boolean }> } {
   const expected = expectedSections(c);
   let filled = 0;

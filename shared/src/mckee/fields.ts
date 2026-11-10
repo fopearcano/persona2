@@ -142,7 +142,39 @@ export function describeFieldIndex(section?: string | null, lang = 'en'): string
   return lines.join('\n');
 }
 
+/**
+ * Campi dell'identità di PERSONA che l'assistente di costruzione (modalità guidata) può
+ * proporre accanto alla costruzione McKee: percorsi `identity.<campo>`, sempre testo.
+ * Non stanno nella costruzione: il browser li applica alla bozza dell'identità e
+ * vengono salvati con la costruzione in un'unica revisione.
+ */
+export const IDENTITY_FIELDS: { key: string; label: string; max: number }[] = [
+  { key: 'name', label: 'Full name', max: 200 },
+  { key: 'age', label: 'Age', max: 100 },
+  { key: 'origin', label: 'Place of origin', max: 500 },
+  { key: 'culturalBackground', label: 'Cultural background', max: 4000 },
+  { key: 'occupation', label: 'Occupation', max: 500 },
+  { key: 'education', label: 'Education', max: 4000 },
+  { key: 'biography', label: 'Biography', max: 12000 },
+  { key: 'appearance', label: 'Physical appearance', max: 4000 },
+  { key: 'temperament', label: 'Temperament', max: 4000 },
+  { key: 'interpersonalStyle', label: 'Interpersonal style', max: 4000 },
+  { key: 'conflictResponse', label: 'Response to conflict', max: 4000 },
+  { key: 'stressResponse', label: 'Reaction to stress', max: 4000 },
+  { key: 'register', label: 'Linguistic register', max: 4000 },
+  { key: 'vocabulary', label: 'Vocabulary', max: 4000 },
+  { key: 'humor', label: 'Humor', max: 4000 },
+];
+export const IDENTITY_KEYS = IDENTITY_FIELDS.map((f) => f.key);
+export const isIdentityPath = (path: string) => path.startsWith('identity.');
+
+export function describeIdentityFields(): string {
+  return IDENTITY_FIELDS.map((f) => `identity.${f.key} — ${f.label} — text`).join('\n');
+}
+
 export interface UpdateContext {
+  /** Accetta anche i campi `identity.*` (assistente di costruzione). */
+  allowIdentity?: boolean;
   build?: CharacterBuild | null;
   /** Id dei personaggi a cui una relazione può puntare (esclusa la persona stessa). */
   castIds?: string[];
@@ -221,6 +253,14 @@ export function validateUpdate(
   const idx = fieldIndex(lang);
   if (!u || typeof u.path !== 'string') return { ok: false, error: 'missing path' };
   const op = u.op === 'append' ? 'append' : u.op === undefined || u.op === 'set' ? 'set' : String(u.op);
+  if (isIdentityPath(u.path)) {
+    const field = IDENTITY_FIELDS.find((f) => `identity.${f.key}` === u.path);
+    if (!ctx.allowIdentity || !field) return { ok: false, error: `unknown path "${u.path}"` };
+    if (op !== 'set') return { ok: false, error: `${u.path}: identity fields only accept op "set"` };
+    const text = u.value == null ? '' : (typeof u.value === 'string' ? u.value : String(u.value)).trim().slice(0, field.max);
+    if (field.key === 'name' && !text) return { ok: false, error: `${u.path}: a name cannot be empty` };
+    return { ok: true, update: { path: u.path, op: 'set', value: text, label: field.label } };
+  }
   const def = idx[u.path];
   if (!def) {
     const last = u.path.split('.').pop();
@@ -251,6 +291,8 @@ export function applyUpdates(build: CharacterBuild, updates: Pick<BuildUpdate, '
   const next = structuredClone(build);
   const idx = fieldIndex('en');
   for (const u of updates) {
+    // I campi dell'identità non stanno nella costruzione (vedi IDENTITY_FIELDS).
+    if (isIdentityPath(u.path)) continue;
     const cur = getPath(next, u.path);
     if (u.op === 'append') {
       const arr = Array.isArray(cur) ? cur : [];

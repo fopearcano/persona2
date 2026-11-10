@@ -401,8 +401,11 @@ export function saveBuild(ctx: AppContext, id: string, input: unknown): Characte
   const current = getCharacter(ctx, id);
   const build = normalizeBuild(data.build);
   const snap = snapshotOf(current);
+  // Campi dell'identità compilati dall'assistente di costruzione: stessa revisione.
+  const profile = Object.fromEntries(Object.entries(data.profile ?? {}).filter(([, v]) => v !== undefined));
   return updateCharacter(ctx, id, {
     ...snap,
+    ...profile,
     bigFive: bigFiveFromBuild(build.outer.implicit.bigFive),
     build,
     modelConfigId: current.modelConfigId,

@@ -907,6 +907,36 @@
       "noProjects": "Crea un progetto per progettarne la storia e il cast.",
       "saved": "Impianto della storia salvato.",
       "open": "Storia e cast"
+    },
+    "guide": {
+      "title": "Assistente di costruzione",
+      "threads": "Interviste di costruzione",
+      "newThread": "Nuova intervista",
+      "emptyTitle": "Costruisci {{name}} chattando",
+      "emptyIntro": "Rispondi alle domande dell'assistente: segue le sedici tappe di McKee una alla volta e trasforma ogni risposta nei campi della costruzione e dell'identità (nome, età, professione, biografia…). Le modifiche compaiono subito nella bozza e puoi annullarle una per una.",
+      "emptyFree": "Oppure racconta liberamente chi è: anche un solo paragrafo compila molti campi. Quando sei soddisfatto, salva: si crea una nuova versione dell'identità.",
+      "start": "Inizia l'intervista",
+      "startPrompt": "Iniziamo: guidami nella costruzione di {{name}}.",
+      "placeholder": "Rispondi o racconta il personaggio (Invio per inviare, Maiusc+Invio per andare a capo)",
+      "captured_one": "{{count}} campo compilato",
+      "captured_other": "{{count}} campi compilati",
+      "undone": "Annullato",
+      "undo": "Annulla",
+      "progress": "Avanzamento",
+      "working": "Tappa in corso: {{station}}",
+      "complete": "Tutte le tappe attese hanno un contenuto: approfondisci o salva.",
+      "autoFocus": "Scelta dell'assistente",
+      "focusHelp": "Scegli una tappa per farne parlare l'assistente.",
+      "identity": "Identità di base",
+      "openFields": "Vedi e modifica i campi",
+      "viewLabel": "Modalità di costruzione",
+      "viewFields": "Campi",
+      "viewChat": "Chat",
+      "viewChatHelp": "Costruisci il personaggio chattando con l'assistente",
+      "createByChat": "Crea chattando",
+      "createIntro": "Dai un nome al personaggio: il resto lo costruisci chattando con l'assistente, che segue il metodo di McKee e compila i campi per te. Usa il motore predefinito (Impostazioni → Motori LLM).",
+      "namePlaceholder": "es. Mara Voss",
+      "startChat": "Inizia a chattare"
     }
   }
 }

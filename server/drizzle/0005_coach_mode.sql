@@ -1,0 +1,1 @@
+ALTER TABLE `coach_threads` ADD `mode` text DEFAULT 'coach' NOT NULL;

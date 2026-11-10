@@ -3,17 +3,17 @@
  * nel libro. Il coach non modifica mai l'identità: l'autore applica le proposte alla bozza
  * e poi salva (revisione dell'identità).
  */
-import type { BookSearchResult, CoachCastSuggestion, CoachMessage, CoachProposal, CoachStreamEvent, CoachUpdate } from '@persona/shared/client';
+import type { BookSearchResult, CoachCastSuggestion, CoachMessage, CoachProposal, CoachUpdate } from '@persona/shared/client';
 import type { CharacterBuild, McKeeData } from '@persona/shared/mckee';
 import { BookOpen, Check, Loader2, MessageSquarePlus, Search, Send, Square, Trash2, UserPlus, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { api, streamPost } from '../../api/client';
-import { qk, useBook, useCoachThread, useCoachThreads, useInvalidate } from '../../api/hooks';
+import { api } from '../../api/client';
+import { useBook } from '../../api/hooks';
 import { useUi } from '../../stores/ui';
 import { Badge, Button, Checkbox, cx, ErrorBox, IconButton, Input, Select, Tabs, Textarea, useErrorText } from '../ui';
-import { useQueryClient } from '@tanstack/react-query';
+import { type CoachSendOptions, useCoachChat } from './useCoachChat';
 
 export interface CoachRequest {
   /** Messaggio da inviare subito (es. dalla domanda della stazione o dalla distillazione). */
@@ -24,7 +24,7 @@ export interface CoachRequest {
   nonce: number;
 }
 
-function formatValue(v: unknown, M: McKeeData): string {
+export function formatValue(v: unknown, M: McKeeData): string {
   if (Array.isArray(v)) return v.map((x) => formatValue(x, M)).join(', ');
   if (v && typeof v === 'object') {
     const o = v as Record<string, unknown>;
@@ -186,88 +186,27 @@ export function CoachPanel({
   onAddCast(member: CoachCastSuggestion): Promise<void>;
   onClose(): void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [tab, setTab] = useState<'coach' | 'book'>('coach');
   const [bookQuery, setBookQuery] = useState('');
-  const { data: threads } = useCoachThreads(characterId);
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const { data: thread } = useCoachThread(threadId);
-  const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [text, setText] = useState('');
-  const [streaming, setStreaming] = useState<{ text: string; reasoning: string } | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const invalidate = useInvalidate();
-  const qc = useQueryClient();
   const toast = useUi((s) => s.toast);
   const errorText = useErrorText();
   const lastRequest = useRef<number | null>(null);
+  const chat = useCoachChat({ characterId, mode: 'coach', body: () => ({ projectId, section, draft }) });
+  const { threads, threadId, messages, streaming, error } = chat;
 
-  // Primo accesso: ultima conversazione con il coach.
-  useEffect(() => {
-    if (threadId === null && threads?.length) setThreadId(threads[0].id);
-  }, [threads, threadId]);
-  useEffect(() => {
-    if (thread && !streaming) setMessages(thread.messages);
-  }, [thread, streaming]);
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
   }, [messages, streaming?.text]);
 
-  const send = async (content: string, opts: { transcriptConversationId?: string | null; newThread?: boolean } = {}) => {
-    const body = content.trim();
-    if (!body || streaming) return;
-    setError(null);
+  const send = (content: string, opts?: CoachSendOptions) => {
     setText('');
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setStreaming({ text: '', reasoning: '' });
-    let tid = opts.newThread ? null : threadId;
-    if (opts.newThread) setMessages([]);
-    try {
-      await streamPost<CoachStreamEvent>(
-        `/api/characters/${characterId}/coach`,
-        { threadId: tid, projectId, content: body, section, draft, uiLanguage: i18n.language, transcriptConversationId: opts.transcriptConversationId ?? null },
-        (e) => {
-          switch (e.type) {
-            case 'thread':
-              tid = e.thread.id;
-              setThreadId(e.thread.id);
-              break;
-            case 'author_message':
-              setMessages((ms) => [...ms, e.message]);
-              break;
-            case 'delta':
-              setStreaming((s) => (s ? { ...s, text: s.text + e.text } : s));
-              break;
-            case 'reasoning':
-              setStreaming((s) => (s ? { ...s, reasoning: s.reasoning + e.text } : s));
-              break;
-            case 'done':
-              setMessages((ms) => [...ms, e.message]);
-              break;
-            case 'error':
-              if (e.message) setMessages((ms) => [...ms, e.message!]);
-              if (e.error.code !== 'aborted') setError(e.error);
-              break;
-          }
-        },
-        controller.signal,
-      );
-    } catch (err) {
-      setError(err);
-    } finally {
-      setStreaming(null);
-      abortRef.current = null;
-      if (tid) {
-        await qc.invalidateQueries({ queryKey: qk.coachThread(tid) });
-        await qc.invalidateQueries({ queryKey: qk.coachThreads(characterId) });
-      }
-    }
+    return chat.send(content, opts);
   };
 
-  // Richieste esterne (domande della stazione, distillazione di una conversazione).
+  // Richieste esterne (domande della tappa, distillazione di una conversazione).
   useEffect(() => {
     if (!request || lastRequest.current === request.nonce) return;
     lastRequest.current = request.nonce;
@@ -282,11 +221,7 @@ export function CoachPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request]);
 
-  const setStatus = async (m: CoachMessage, p: CoachProposal, status: 'applied' | 'dismissed') => {
-    const updated = await api.put<CoachMessage>(`/api/coach/messages/${m.id}/proposals/${p.id}`, { status });
-    setMessages((ms) => ms.map((x) => (x.id === m.id ? updated : x)));
-    if (threadId) await qc.invalidateQueries({ queryKey: qk.coachThread(threadId) });
-  };
+  const setStatus = (m: CoachMessage, p: CoachProposal, status: 'applied' | 'dismissed') => chat.setProposalStatus(m.id, p, status);
 
   const actions = (m: CoachMessage, p: CoachProposal) => ({
     p,
@@ -296,7 +231,9 @@ export function CoachPanel({
       await setStatus(m, p, 'applied');
       toast(t('mckee.coach.appliedToast'), 'success');
     },
-    onDismiss: () => setStatus(m, p, 'dismissed'),
+    onDismiss: async () => {
+      await setStatus(m, p, 'dismissed');
+    },
     onAddCast: async (member: CoachCastSuggestion) => {
       try {
         await onAddCast(member);
@@ -309,10 +246,7 @@ export function CoachPanel({
 
   const removeThread = async () => {
     if (!threadId || !window.confirm(t('mckee.coach.deleteThreadConfirm'))) return;
-    await api.del(`/api/coach/threads/${threadId}`);
-    setThreadId(null);
-    setMessages([]);
-    await invalidate('character');
+    await chat.removeThread();
   };
 
   const station = section ? M.SECTION_BY_ID[section] : null;
@@ -342,13 +276,10 @@ export function CoachPanel({
               aria-label={t('mckee.coach.threads')}
               className="h-7! flex-1 py-0! text-xs"
               value={threadId ?? ''}
-              onChange={(e) => {
-                setThreadId(e.target.value || null);
-                if (!e.target.value) setMessages([]);
-              }}
+              onChange={(e) => chat.selectThread(e.target.value || null)}
             >
               <option value="">{t('mckee.coach.newThread')}</option>
-              {(threads ?? []).map((th) => (
+              {threads.map((th) => (
                 <option key={th.id} value={th.id}>
                   {th.title}
                 </option>
@@ -357,10 +288,7 @@ export function CoachPanel({
             <IconButton
               label={t('mckee.coach.newThread')}
               icon={<MessageSquarePlus className="size-4" />}
-              onClick={() => {
-                setThreadId(null);
-                setMessages([]);
-              }}
+              onClick={() => chat.selectThread(null)}
             />
             {threadId && <IconButton label={t('mckee.coach.deleteThread')} icon={<Trash2 className="size-4" />} onClick={removeThread} />}
           </div>
@@ -416,7 +344,7 @@ export function CoachPanel({
               }}
             />
             {streaming ? (
-              <IconButton label={t('mckee.coach.stop')} icon={<Square className="size-4" />} onClick={() => abortRef.current?.abort()} />
+              <IconButton label={t('mckee.coach.stop')} icon={<Square className="size-4" />} onClick={chat.stop} />
             ) : (
               <IconButton label={t('mckee.coach.send')} icon={<Send className="size-4" />} disabled={!text.trim()} onClick={() => void send(text)} />
             )}

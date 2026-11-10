@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { applyCapture, undoCapture } from '../../lib/mckee';
 import { CastMap } from './CastMap';
 import { FieldView, type FieldCtx } from './Fields';
 import { StationVisual, type VizCtx } from './Viz';
@@ -102,5 +103,33 @@ describe('McKee translations', () => {
     const untranslated = [...used].filter((s) => mt('it', s) === s && !same.has(s));
     expect(untranslated).toEqual([]);
     expect(used.size).toBeGreaterThan(150);
+  });
+});
+
+describe('building assistant captures', () => {
+  it('applies captures to build and identity drafts and undoes them exactly', () => {
+    const build = newBuild();
+    build.concept.logline = 'prima';
+    build.dimensions = [{ id: 'd1', positive: 'A', negative: 'B', defining: true }];
+    const identity = { name: 'Mara', occupation: null };
+    const updates = [
+      { path: 'concept.logline', op: 'set' as const, value: 'dopo' },
+      { path: 'inner.motivations.meaning', op: 'set' as const, value: 8 },
+      { path: 'dimensions', op: 'append' as const, value: { id: 'd2', positive: 'C', negative: 'D', defining: true } },
+      { path: 'identity.occupation', op: 'set' as const, value: 'Biologa marina' },
+    ];
+    const r = applyCapture(build, identity, updates);
+    expect(r.build.concept.logline).toBe('dopo');
+    expect(r.build.inner.motivations).toEqual({ meaning: 8 });
+    expect(r.build.dimensions.map((d) => [d.id, d.defining])).toEqual([
+      ['d1', false],
+      ['d2', true],
+    ]);
+    expect(r.identity.occupation).toBe('Biologa marina');
+    expect(build.concept.logline).toBe('prima'); // la bozza precedente non cambia
+
+    const back = undoCapture(r.build, r.identity, r.undo);
+    expect(back.build).toEqual(build);
+    expect(back.identity).toEqual(identity);
   });
 });

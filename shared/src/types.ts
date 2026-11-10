@@ -733,8 +733,12 @@ export interface CoachMessage {
   createdAt: string;
 }
 
+export type CoachMode = 'coach' | 'guide';
+
 export interface CoachThread {
   id: string;
+  /** coach = consulente; guide = assistente che costruisce il personaggio chattando. */
+  mode: CoachMode;
   characterId: string;
   projectId: string | null;
   title: string;
