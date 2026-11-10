@@ -1,7 +1,6 @@
 {
   "app": {
-    "name": "PERSONA",
-    "tagline": "Laboratorio de identidades persistentes"
+    "name": "PERSONA"
   },
   "nav": {
     "projects": "Proyectos",
@@ -12,7 +11,9 @@
     "simulations": "Simulaciones",
     "memory": "Memoria",
     "settings": "Ajustes",
-    "story": "Historia y reparto"
+    "story": "Historia y reparto",
+    "hidePanel": "Ocultar el panel",
+    "showPanel": "Mostrar el panel"
   },
   "common": {
     "save": "Guardar",
@@ -241,7 +242,6 @@
     "all": "Todos los proyectos",
     "none": "Sin proyecto",
     "switcher": "Proyecto activo",
-    "manage": "Gestionar proyectos",
     "name": "Nombre",
     "description": "Descripción",
     "addExisting": "Añadir personaje existente",

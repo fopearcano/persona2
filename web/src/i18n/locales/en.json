@@ -1,7 +1,6 @@
 {
   "app": {
-    "name": "PERSONA",
-    "tagline": "Persistent identity laboratory"
+    "name": "PERSONA"
   },
   "nav": {
     "projects": "Projects",
@@ -12,7 +11,9 @@
     "simulations": "Simulations",
     "memory": "Memory",
     "settings": "Settings",
-    "story": "Story & cast"
+    "story": "Story & cast",
+    "hidePanel": "Hide the panel",
+    "showPanel": "Show the panel"
   },
   "common": {
     "save": "Save",
@@ -241,7 +242,6 @@
     "all": "All projects",
     "none": "No project",
     "switcher": "Active project",
-    "manage": "Manage projects",
     "name": "Name",
     "description": "Description",
     "addExisting": "Add existing character",

@@ -1,7 +1,6 @@
 {
   "app": {
-    "name": "PERSONA",
-    "tagline": "Labor für persistente Identitäten"
+    "name": "PERSONA"
   },
   "nav": {
     "projects": "Projekte",
@@ -12,7 +11,9 @@
     "simulations": "Simulationen",
     "memory": "Gedächtnis",
     "settings": "Einstellungen",
-    "story": "Geschichte und Besetzung"
+    "story": "Geschichte und Besetzung",
+    "hidePanel": "Seitenleiste ausblenden",
+    "showPanel": "Seitenleiste einblenden"
   },
   "common": {
     "save": "Speichern",
@@ -241,7 +242,6 @@
     "all": "Alle Projekte",
     "none": "Ohne Projekt",
     "switcher": "Aktives Projekt",
-    "manage": "Projekte verwalten",
     "name": "Name",
     "description": "Beschreibung",
     "addExisting": "Vorhandene Figur hinzufügen",

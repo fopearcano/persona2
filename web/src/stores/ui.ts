@@ -7,6 +7,15 @@ import { applyAppearance, normalizeAppearance } from '../lib/appearance';
 const THEME_KEY = 'persona.theme';
 const PROJECT_KEY = 'persona.activeProject';
 const APPEARANCE_KEY = 'persona.appearance';
+const NAV_KEY = 'persona.navHidden';
+
+function readNavHidden(): boolean {
+  try {
+    return localStorage.getItem(NAV_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 /** Copia locale dello stile: applicata prima del primo disegno, poi allineata al backend. */
 function readAppearance(): AppearancePreferences {
@@ -58,6 +67,9 @@ interface UiState {
   dismiss(id: number): void;
   inspectorOpen: boolean;
   toggleInspector(): void;
+  /** Pannello laterale di navigazione nascosto (preferenza locale del browser). */
+  navHidden: boolean;
+  toggleNav(): void;
   /** Progetto attivo (null = tutti i progetti). Salvato anche sul backend. */
   activeProjectId: string | null;
   setActiveProject(id: string | null, opts?: { persist?: boolean }): void;
@@ -104,6 +116,17 @@ export const useUi = create<UiState>((set, get) => ({
   inspectorOpen: true,
   toggleInspector() {
     set({ inspectorOpen: !get().inspectorOpen });
+  },
+  navHidden: readNavHidden(),
+  toggleNav() {
+    const navHidden = !get().navHidden;
+    try {
+      if (navHidden) localStorage.setItem(NAV_KEY, '1');
+      else localStorage.removeItem(NAV_KEY);
+    } catch {
+      /* ignora */
+    }
+    set({ navHidden });
   },
   activeProjectId: readProject(),
   setActiveProject(id, opts = {}) {

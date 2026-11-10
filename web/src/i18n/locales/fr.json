@@ -1,7 +1,6 @@
 {
   "app": {
-    "name": "PERSONA",
-    "tagline": "Laboratoire d'identités persistantes"
+    "name": "PERSONA"
   },
   "nav": {
     "projects": "Projets",
@@ -12,7 +11,9 @@
     "simulations": "Simulations",
     "memory": "Mémoire",
     "settings": "Paramètres",
-    "story": "Histoire et distribution"
+    "story": "Histoire et distribution",
+    "hidePanel": "Masquer le panneau",
+    "showPanel": "Afficher le panneau"
   },
   "common": {
     "save": "Enregistrer",
@@ -241,7 +242,6 @@
     "all": "Tous les projets",
     "none": "Sans projet",
     "switcher": "Projet actif",
-    "manage": "Gérer les projets",
     "name": "Nom",
     "description": "Description",
     "addExisting": "Ajouter un personnage existant",
