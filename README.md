@@ -44,7 +44,7 @@ npm run dev
 ```
 
 - Backend: `http://127.0.0.1:4317` (API)
-- Interfaccia: **`http://127.0.0.1:5173`** (Vite, inoltra `/api` al backend)
+- Interfaccia: **`http://127.0.0.1:5111`** (Vite, inoltra `/api` al backend; porta modificabile con `PERSONA_WEB_PORT`)
 
 ### Uso quotidiano (build di produzione)
 

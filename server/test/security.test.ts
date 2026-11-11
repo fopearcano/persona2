@@ -28,7 +28,7 @@ describe('local-only access', () => {
     const same = await env.app.inject({
       method: 'POST',
       url: '/api/characters',
-      headers: { origin: 'http://localhost:5173', host: 'localhost:5173' },
+      headers: { origin: 'http://localhost:5111', host: 'localhost:5111' },
       payload: { name: 'X' },
     });
     expect(same.statusCode).toBe(201);

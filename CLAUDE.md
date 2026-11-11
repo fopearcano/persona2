@@ -83,7 +83,7 @@ identità → recupero memorie (retrieval.ts) → assemblaggio contesto (context
 
 ```bash
 npm install            # dalla root (workspaces)
-npm run dev            # backend :4317 (tsx watch) + Vite :5173 con proxy /api
+npm run dev            # backend :4317 (tsx watch) + Vite :5111 (PERSONA_WEB_PORT) con proxy /api
 npm run build          # build del frontend (web/dist)
 npm start              # produzione: backend serve API + web/dist su http://127.0.0.1:4317
 npm run typecheck      # tsc su shared, server, web
@@ -103,7 +103,7 @@ Installer: in `desktop/electron-builder.config.cjs` i `files` di ogni piattaform
 
 Release: versione in `desktop/package.json` + note in `docs/releases/vX.Y.Z.md`, poi tag `vX.Y.Z` (o workflow *Release* manuale con il tag). `.github/workflows/release.yml`: verifica → installer Windows (NSIS) e Linux (AppImage + deb) sui runner GitHub, ciascuno con smoke test dell'app impacchettata (passi comuni in `build-installer.yml`, workflow riutilizzabile) → GitHub Release con SHA256SUMS → installer macOS **Intel** (dmg x64, firma ad hoc) su runner **self-hosted** `[self-hosted, macOS, X64]`, aggiunto alla release con SHA256SUMS aggiornato (job separato: un Mac offline non blocca Windows/Linux; smoke test macOS non bloccante perché richiede una sessione grafica). Installer non firmati. Non salvare token o credenziali dei runner nel repository. Electron viene scaricato da `desktop/fetch-electron.mjs` (tentativi ripetuti + verifica SHA-256) e i download sono in cache tra le esecuzioni.
 
-Variabili: `PERSONA_DATA_DIR` (default: cartella utente del sistema, es. `~/.config/PERSONA/data`), `PERSONA_PORT` (4317), `PERSONA_HOST` (127.0.0.1), `PERSONA_LMSTUDIO_URL`, `OPENAI_API_KEY`, `PERSONA_ALLOWED_HOSTS`, `PERSONA_BOOK_PATH` (epub di McKee). Vedi `.env.example`.
+Variabili: `PERSONA_DATA_DIR` (default: cartella utente del sistema, es. `~/.config/PERSONA/data`), `PERSONA_PORT` (4317), `PERSONA_WEB_PORT` (Vite in sviluppo, 5111), `PERSONA_HOST` (127.0.0.1), `PERSONA_LMSTUDIO_URL`, `OPENAI_API_KEY`, `PERSONA_ALLOWED_HOSTS`, `PERSONA_BOOK_PATH` (epub di McKee). Vedi `.env.example`.
 
 ## Convenzioni
 
