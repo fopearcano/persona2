@@ -23,3 +23,5 @@ desktop/.eb-cache/
 
 # Libro di McKee (copia personale, non va nel repository)
 *.epub
+# Copia di sicurezza della vecchia cartella dati dentro il repository (vedi server/src/lib/data-dir.ts)
+data.moved-*/

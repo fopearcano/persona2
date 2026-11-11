@@ -78,7 +78,17 @@ cd desktop && npm run dist:linux   # oppure dist:win su Windows, dist:mac su mac
 
 **Pubblicare una release**: aggiornare la versione in `desktop/package.json` (e negli altri `package.json`), scrivere le note in `docs/releases/vX.Y.Z.md`, poi creare il tag `vX.Y.Z` (oppure avviare manualmente il workflow *Release* indicando il tag). Il workflow `.github/workflows/release.yml` esegue typecheck, test e build; crea gli installer Windows e Linux sui runner di GitHub, li verifica con uno smoke test dell'app impacchettata e pubblica la release con `SHA256SUMS.txt`; l'installer macOS Intel viene costruito su un **runner self-hosted** (etichette `self-hosted`, `macOS`, `X64`) e aggiunto alla stessa release appena pronto. Se il Mac non è disponibile, Windows e Linux vengono pubblicati comunque. Il runner self-hosted va usato solo per questo workflow (mai per workflow attivati da pull request).
 
-Il database viene creato in `./data/persona.db` e le migrazioni vengono applicate automaticamente all'avvio. Per cambiare cartella o porta: variabili `PERSONA_DATA_DIR`, `PERSONA_PORT` (vedi `.env.example`; un file `.env` nella root o in `server/` viene letto automaticamente).
+I dati stanno **fuori dal repository**, nella cartella utente del sistema (la stessa dell'app desktop), così reinstallare o clonare di nuovo il progetto non li perde:
+
+| Sistema | Cartella dati |
+|---|---|
+| Windows | `%APPDATA%\PERSONA\data` |
+| macOS | `~/Library/Application Support/PERSONA/data` |
+| Linux | `~/.config/PERSONA/data` (o `$XDG_CONFIG_HOME/PERSONA/data`) |
+
+Il percorso esatto è indicato in **Impostazioni → Informazioni → Cartella dati** e nel messaggio di avvio del server. Le migrazioni vengono applicate automaticamente all'avvio. Per usare un'altra cartella o porta: variabili `PERSONA_DATA_DIR`, `PERSONA_PORT` (vedi `.env.example`; un file `.env` nella root o in `server/` viene letto automaticamente).
+
+**Aggiornare da una versione che teneva i dati in `./data`** (PERSONA 0.4 e 2.0 avviati dai sorgenti): al primo avvio, se il repository contiene ancora `data/persona.db` e la cartella utente non ha un database, i dati vengono copiati lì e la vecchia cartella viene rinominata in `data.moved-<data>` come copia di sicurezza (si può eliminare dopo aver controllato). Se entrambe contengono un database, PERSONA usa quello della cartella utente e lo segnala all'avvio; per usare l'altro imposta `PERSONA_DATA_DIR`. Evita di tenere aperti contemporaneamente l'app desktop e la versione dai sorgenti: userebbero lo stesso database.
 
 ## Configurare LM Studio
 
@@ -136,7 +146,7 @@ Ogni personaggio ha una **Costruzione McKee** (pulsante con il martello nell'ele
 - **Coach McKee** (pulsante *Coach*): un collaboratore che legge la costruzione — anche le modifiche non ancora salvate —, le verifiche McKee, la tappa aperta e i passaggi pertinenti del libro. Usa il **motore del personaggio** (LM Studio, OpenAI o compatibili; nessuno strumento richiesto, quindi funziona anche con modelli locali senza *function calling*). Propone valori per i campi e nuovi membri del cast: le proposte sono validate e vanno **applicate dall'autore** alla bozza, poi salvate. Le conversazioni con il coach non sono parlato del personaggio e non generano memorie.
 - **Costruire chattando** (assistente di costruzione): invece di compilare i campi, si costruisce il personaggio conversando. Nella Costruzione McKee scegli la vista **Chat** (o, dall'elenco dei personaggi, **Crea chattando**: basta un nome). L'assistente guida l'intervista tappa per tappa — partendo dalle tappe attese per il ruolo e saltando ciò che è già compilato — e trasforma ogni risposta in valori dei campi: della costruzione e dell'identità di base (nome, età, origine, professione, biografia, aspetto, temperamento, registro…). Si può anche raccontare il personaggio liberamente: un paragrafo compila molti campi. Le modifiche entrano subito nella bozza, si vedono nel messaggio dell'assistente e si annullano una per una; nella barra laterale si segue l'avanzamento e si può scegliere di quale tappa parlare. Come sempre, l'identità cambia solo quando salvi (una sola revisione per costruzione e identità). Usa la stessa API e lo stesso motore del coach.
 - **Distillare un'intervista** (esercizio del racconto di sé, Cap. 4): nel Dialogo, il pulsante con il martello apre il coach con la trascrizione della conversazione, che il coach trasforma in proposte per la costruzione.
-- **Il libro.** Il libro di McKee **non è incluso**. Se ne possiedi una copia in formato .epub, caricala in **Impostazioni → Libro di McKee** (resta in `data/books/`) oppure indica `PERSONA_BOOK_PATH`. PERSONA la legge in locale, la divide in passaggi per capitolo e sezione e la cerca con BM25; le ricerche in italiano vengono ampliate con il lessico inglese di McKee (*dimensione definitoria* → *defining dimension*). Senza libro tutto il resto funziona.
+- **Il libro.** Il libro di McKee **non è incluso**. Se ne possiedi una copia in formato .epub, caricala in **Impostazioni → Libro di McKee** (resta nella cartella dati, in `books/`) oppure indica `PERSONA_BOOK_PATH`. PERSONA la legge in locale, la divide in passaggi per capitolo e sezione e la cerca con BM25; le ricerche in italiano vengono ampliate con il lessico inglese di McKee (*dimensione definitoria* → *defining dimension*). Senza libro tutto il resto funziona.
 - **Lingue.** I contenuti McKee (tappe, catalogo, verifiche, infografiche) sono in **italiano e inglese**; con l'interfaccia in francese, spagnolo, tedesco o portoghese appaiono in inglese. Il coach risponde nella lingua dell'interfaccia.
 
 ## Percorso tipico
@@ -173,7 +183,7 @@ node scripts/e2e-mckee.cjs /tmp/persona-shots   # (su un altro database vuoto) c
 
 ## Dati e portabilità
 
-- Database: `data/persona.db` (SQLite, UTF-8). Backup in `data/backups/`.
+- Database: `persona.db` (SQLite, UTF-8) nella cartella dati (vedi [Avvio](#avvio)). Backup in `backups/` nella stessa cartella.
 - **Backup**: Impostazioni → Backup (copia consistente tramite l'API di backup di SQLite). Il ripristino salva prima una copia di sicurezza del database corrente. Nota: il backup contiene anche le eventuali chiavi API salvate nelle configurazioni dei motori.
 - **Progetti**: tutto viene salvato automaticamente nel database locale; *Salva su file* crea una copia portabile del progetto (`persona.project`), riapribile con *Apri da file* sullo stesso o su un altro computer (riusando i personaggi già presenti o importandoli come nuove identità). Un progetto riaperto accanto all'originale riceve un nome numerato, es. «Saga (2)».
 - **Costruzione McKee e impianto della storia**: viaggiano con le esportazioni di personaggi (`build`) e progetti (`story`); aprendo un progetto da file le relazioni del cast puntano ai personaggi importati. I file di PERSONA 1 si importano come prima (senza costruzione).

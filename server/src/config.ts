@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { dirname, isAbsolute, posix, resolve, win32 } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -7,6 +8,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(here, '..', '..');
 export const SERVER_ROOT = resolve(here, '..');
 export const MIGRATIONS_DIR = resolve(SERVER_ROOT, 'drizzle');
+/** Cartella dati delle versioni precedenti avviate dai sorgenti (dentro il repository). */
+export const LEGACY_DATA_DIR = resolve(REPO_ROOT, 'data');
+
+/**
+ * Cartella dati predefinita: la cartella utente del sistema, la stessa dell'app desktop
+ * (`app.getPath('userData')/data` di Electron con nome "PERSONA"). Fuori dal repository,
+ * così reinstallare o clonare di nuovo il progetto non perde i dati.
+ * - Windows: %APPDATA%\PERSONA\data
+ * - macOS:   ~/Library/Application Support/PERSONA/data
+ * - Linux:   $XDG_CONFIG_HOME/PERSONA/data (di solito ~/.config/PERSONA/data)
+ */
+export function defaultDataDir(env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform, home = homedir()): string {
+  if (platform === 'win32') return win32.join(env.APPDATA || win32.join(home, 'AppData', 'Roaming'), 'PERSONA', 'data');
+  if (platform === 'darwin') return posix.join(home, 'Library', 'Application Support', 'PERSONA', 'data');
+  return posix.join(env.XDG_CONFIG_HOME || posix.join(home, '.config'), 'PERSONA', 'data');
+}
 
 export interface AppConfig {
   host: string;
@@ -47,11 +64,16 @@ function loadDotEnv(file: string) {
   }
 }
 
-export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
+/** Legge i file .env (server/.env e .env nella root) senza sovrascrivere le variabili già definite. */
+export function loadEnvFiles(): void {
   loadDotEnv(resolve(SERVER_ROOT, '.env'));
   loadDotEnv(resolve(REPO_ROOT, '.env'));
+}
+
+export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
+  loadEnvFiles();
   const env = process.env;
-  const dataDirRaw = env.PERSONA_DATA_DIR ?? resolve(REPO_ROOT, 'data');
+  const dataDirRaw = env.PERSONA_DATA_DIR || defaultDataDir();
   const dataDir = isAbsolute(dataDirRaw) ? dataDirRaw : resolve(REPO_ROOT, dataDirRaw);
   const production = env.NODE_ENV === 'production';
   const webDist = resolve(REPO_ROOT, 'web', 'dist');
