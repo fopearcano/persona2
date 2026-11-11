@@ -2,7 +2,7 @@
   "name": "persona",
   "version": "2.0.0",
   "private": true,
-  "description": "PERSONA \u2014 laboratorio local-first per identit\u00e0 artificiali persistenti",
+  "description": "PERSONA — laboratorio local-first per identità artificiali persistenti",
   "type": "module",
   "workspaces": [
     "shared",
@@ -23,7 +23,8 @@
     "db:migrate": "npm run db:migrate -w server",
     "desktop:install": "npm install --prefix desktop --no-workspaces",
     "desktop": "npm run build && npm start --prefix desktop",
-    "desktop:smoke": "npm run build && npm run smoke --prefix desktop"
+    "desktop:smoke": "npm run build && npm run smoke --prefix desktop",
+    "desktop:dist": "npm run build && npm run desktop:install && node desktop/dist-local.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.5",

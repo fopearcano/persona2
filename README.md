@@ -70,11 +70,13 @@ npm run desktop           # build del frontend + avvio dell'app desktop
 
 I dati dell'app desktop stanno nella cartella utente del sistema (`…/PERSONA/data`, oppure `PERSONA_DATA_DIR`). Verifica non interattiva: `npm run desktop:smoke` (su Linux senza display: `xvfb-run npm run desktop:smoke`).
 
-Installer in locale (electron-builder, risultato in `desktop/release/`), dopo `npm run build` nella root:
+Installer in locale per il sistema su cui lavori (Windows → `.exe`, Linux → AppImage e deb, macOS → dmg Intel), con un solo comando dalla root; risultato in `desktop/release/`:
 
 ```bash
-cd desktop && npm run dist:linux   # oppure dist:win su Windows, dist:mac su macOS
+npm run desktop:dist
 ```
+
+Esegue gli stessi passi del workflow di release: build del frontend, dipendenze dell'app desktop, Electron scaricato con tentativi ripetuti e verificato con SHA-256 (`desktop/fetch-electron.mjs`), poi electron-builder con quell'Electron e nuovi tentativi se fallisce il download dei suoi strumenti. Gli installer non sono firmati. Se la creazione non riesce, conserva il messaggio d'errore mostrato alla fine.
 
 **Pubblicare una release**: aggiornare la versione in `desktop/package.json` (e negli altri `package.json`), scrivere le note in `docs/releases/vX.Y.Z.md`, poi creare il tag `vX.Y.Z` (oppure avviare manualmente il workflow *Release* indicando il tag). Il workflow `.github/workflows/release.yml` esegue typecheck, test e build; crea gli installer Windows e Linux sui runner di GitHub, li verifica con uno smoke test dell'app impacchettata e pubblica la release con `SHA256SUMS.txt`; l'installer macOS Intel viene costruito su un **runner self-hosted** (etichette `self-hosted`, `macOS`, `X64`) e aggiunto alla stessa release appena pronto. Se il Mac non è disponibile, Windows e Linux vengono pubblicati comunque. Il runner self-hosted va usato solo per questo workflow (mai per workflow attivati da pull request).
 

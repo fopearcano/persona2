@@ -13,7 +13,8 @@
     "dist": "npm run build && electron-builder --config electron-builder.config.cjs --publish never",
     "dist:linux": "npm run build && electron-builder --config electron-builder.config.cjs --linux --publish never",
     "dist:win": "npm run build && electron-builder --config electron-builder.config.cjs --win --publish never",
-    "dist:mac": "npm run build && electron-builder --config electron-builder.config.cjs --mac --publish never"
+    "dist:mac": "npm run build && electron-builder --config electron-builder.config.cjs --mac --publish never",
+    "dist:local": "node dist-local.mjs"
   },
   "dependencies": {
     "@fastify/static": "^10.1.10",

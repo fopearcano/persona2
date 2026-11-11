@@ -7,6 +7,21 @@
  */
 const electronChecksums = require('electron/checksums.json');
 
+/**
+ * File dell'app dentro app.asar: solo il bundle e package.json (più i moduli npm esterni).
+ * Attenzione: un elenco "files" a livello di piattaforma SOSTITUISCE quello generale (e se contiene
+ * solo esclusioni electron-builder aggiunge "**\/*", impacchettando tutta la cartella desktop/,
+ * compresi gli archivi di Electron scaricati). Per questo ogni piattaforma usa appFiles(...).
+ */
+const appFiles = (...extra) => [
+  "dist/main.mjs",
+  "package.json",
+  "!**/node_modules/better-sqlite3/{deps,src}/**",
+  "!**/node_modules/*/{test,tests,docs,example,examples}/**",
+  "!**/*.{md,map,ts}",
+  ...extra
+];
+
 module.exports = {
   "appId": "io.github.fopearcano.persona",
   "productName": "PERSONA",
@@ -15,13 +30,7 @@ module.exports = {
     "output": "release",
     "buildResources": "build"
   },
-  "files": [
-    "dist/main.mjs",
-    "package.json",
-    "!**/node_modules/better-sqlite3/{deps,src}/**",
-    "!**/node_modules/*/{test,tests,docs,example,examples}/**",
-    "!**/*.{md,map,ts}"
-  ],
+  "files": appFiles(),
   "extraResources": [
     {
       "from": "dist/web",
@@ -60,9 +69,7 @@ module.exports = {
     "category": "Office",
     "executableName": "persona",
     "synopsis": "Laboratorio di identità artificiali persistenti",
-    "files": [
-      "!**/node_modules/better-sqlite3/prebuilds/{darwin,win32,linuxmusl}-*"
-    ],
+    "files": appFiles("!**/node_modules/better-sqlite3/prebuilds/{darwin,win32,linuxmusl}-*"),
     "syncDesktopName": true
   },
   "deb": {
@@ -82,9 +89,7 @@ module.exports = {
         ]
       }
     ],
-    "files": [
-      "!**/node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*"
-    ]
+    "files": appFiles("!**/node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*")
   },
   "nsis": {
     "oneClick": false,
@@ -106,9 +111,7 @@ module.exports = {
     "category": "public.app-category.productivity",
     "identity": "-",
     "hardenedRuntime": false,
-    "files": [
-      "!**/node_modules/better-sqlite3/prebuilds/{linux,linuxmusl,win32}-*"
-    ]
+    "files": appFiles("!**/node_modules/better-sqlite3/prebuilds/{linux,linuxmusl,win32}-*")
   },
   "dmg": {
     "artifactName": "PERSONA-${version}-mac-${arch}.${ext}"
