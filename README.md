@@ -11,7 +11,7 @@ PERSONA permette di creare, mantenere, interrogare e simulare personaggi che esi
 
 I lavori sono organizzati in **progetti**: ogni progetto è una storia (un romanzo, una saga, una campagna) con il proprio cast di personaggi, i propri scenari e le proprie simulazioni. Lo stesso personaggio può partecipare a più storie senza essere duplicato.
 
-Nessun account, nessun abbonamento, nessuna telemetria. Tutti i dati restano in un file SQLite sul tuo computer.
+Nessun account, nessun abbonamento, nessuna telemetria. Tutti i dati restano in un file SQLite sul tuo computer; se vuoi usarli su più computer, la [sincronizzazione tra dispositivi](#sincronizzazione-tra-dispositivi) passa da una cartella di Google Drive, Dropbox, OneDrive o simili, senza account per PERSONA.
 
 Interfaccia disponibile in **italiano** (predefinita), inglese, francese, spagnolo, tedesco e portoghese; i personaggi possono conversare in qualsiasi lingua supportata dal modello.
 
@@ -186,10 +186,37 @@ node scripts/e2e-mckee.cjs /tmp/persona-shots   # (su un altro database vuoto) c
 ## Dati e portabilità
 
 - Database: `persona.db` (SQLite, UTF-8) nella cartella dati (vedi [Avvio](#avvio)). Backup in `backups/` nella stessa cartella.
-- **Backup**: Impostazioni → Backup (copia consistente tramite l'API di backup di SQLite). Il ripristino salva prima una copia di sicurezza del database corrente. Nota: il backup contiene anche le eventuali chiavi API salvate nelle configurazioni dei motori.
+- **Backup**: Impostazioni → Backup (copia consistente tramite l'API di backup di SQLite). Il ripristino salva prima una copia di sicurezza del database corrente. Nota: il backup contiene anche le eventuali chiavi API salvate nelle configurazioni dei motori e la chiave della cartella di sincronizzazione cifrata.
 - **Progetti**: tutto viene salvato automaticamente nel database locale; *Salva su file* crea una copia portabile del progetto (`persona.project`), riapribile con *Apri da file* sullo stesso o su un altro computer (riusando i personaggi già presenti o importandoli come nuove identità). Un progetto riaperto accanto all'originale riceve un nome numerato, es. «Saga (2)».
 - **Costruzione McKee e impianto della storia**: viaggiano con le esportazioni di personaggi (`build`) e progetti (`story`); aprendo un progetto da file le relazioni del cast puntano ai personaggi importati. I file di PERSONA 1 si importano come prima (senza costruzione).
 - **Esportazione personaggi e scenari**: JSON documentato in [`docs/export-format.md`](docs/export-format.md). Un personaggio esportato porta con sé identità, cronologia delle versioni, tutte le memorie personali e, a scelta, conversazioni del laboratorio e base di conoscenza; all'importazione si può scegliere cosa includere. L'importazione non sovrascrive mai dati esistenti, è tutto o niente (un file danneggiato non lascia dati parziali) e, se il file è di un altro tipo (scenario, progetto) o di una versione più recente, lo dice chiaramente.
+
+## Sincronizzazione tra dispositivi
+
+Per usare gli stessi personaggi, progetti e conversazioni su più computer (es. fisso e portatile), PERSONA usa una **cartella sincronizzata da un servizio cloud** che hai già: Google Drive (con *Google Drive per desktop*), Dropbox, OneDrive, iCloud Drive, Nextcloud o Syncthing. PERSONA non si collega a nessun servizio e non chiede account: scrive file in quella cartella e il programma del servizio cloud li porta sugli altri computer.
+
+1. Installa il client del servizio cloud su ogni computer (per Google Drive: [Google Drive per desktop](https://www.google.com/drive/download/)).
+2. Sul primo computer: **Impostazioni → Sincronizzazione tra dispositivi**. PERSONA propone le cartelle dei servizi che trova (es. `G:\Il mio Drive\PERSONA` su Windows, `~/Library/CloudStorage/GoogleDrive-…/My Drive/PERSONA` su macOS); in alternativa scrivi il percorso. Facoltativamente scegli una **passphrase** per cifrare i file nel cloud (AES-256-GCM; senza passphrase i file sono compressi ma leggibili da chi accede alla cartella). *Collega e sincronizza*.
+3. Sugli altri computer: stessa cartella (e stessa passphrase). Un'installazione nuova e vuota adotta i dati condivisi; una con dati propri li unisce a quelli degli altri.
+
+Da quel momento PERSONA sincronizza ogni 5 minuti (configurabile, o solo a mano), all'avvio e alla chiusura; l'indicatore in fondo al pannello laterale mostra lo stato e con un clic sincronizza subito, utile prima di spostarsi su un altro computer.
+
+Come funziona:
+
+- **Il database non viene mai copiato nel cloud** (un file SQLite aperto su due computer si rovinerebbe). Ogni dispositivo scrive solo le *proprie* modifiche, in blocchi numerati nella propria sottocartella `devices/<id>/`, e legge quelli degli altri.
+- Le modifiche si uniscono **riga per riga**: se la stessa cosa cambia su due computer prima di sincronizzare, vale la modifica più recente. Le versioni precedenti dell'identità restano comunque nella cronologia del personaggio, quindi nulla di ciò che è stato salvato va perso. Un'eliminazione prevale sulle modifiche precedenti.
+- **Restano su ogni computer**: chiavi API, motore predefinito, preferenze dell'interfaccia (lingua, stile, progetto attivo), embedding (ricalcolati localmente), statistiche di recupero, backup e il libro di McKee. Le configurazioni dei motori (nome, URL, modello) si sincronizzano.
+- Se una modifica arriva mentre stai modificando qualcosa senza salvare, la bozza non viene toccata: i dati si aggiornano dopo il salvataggio.
+- Un database copiato a mano su un altro computer prende automaticamente una nuova identità di dispositivo (due copie non scrivono mai negli stessi file).
+
+Avvertenze:
+
+- Evita di continuare **la stessa conversazione** su due computer senza sincronizzare in mezzo: i messaggi vengono conservati entrambi, ma si alternano per ora di creazione.
+- Gli orologi dei computer devono essere ragionevolmente corretti (la «modifica più recente» si decide con l'ora del sistema).
+- **Ripristinare un backup** riguarda solo questo computer: al giro successivo rientrano le modifiche già sincronizzate dopo il backup (anche quelle fatte qui). Per riportare tutti i dispositivi a un backup: ripristinalo su un computer, collegalo a una cartella nuova e collega a quella cartella gli altri computer partendo da un'installazione vuota.
+- Un dispositivo con una versione più vecchia di PERSONA aspetta (senza perdere nulla) le modifiche fatte con una versione più recente finché non viene aggiornato.
+- Se perdi la passphrase, i file nel cloud non si possono più leggere; i dati sui computer restano intatti e puoi ricominciare con una cartella nuova.
+- Su Linux non esiste un client ufficiale di Google Drive: usa una cartella montata con rclone, Insync o simili, oppure Dropbox, Nextcloud o Syncthing.
 
 ## Architettura in breve
 
@@ -220,6 +247,7 @@ Monorepo npm: `shared/` (tipi e schemi; `shared/src/mckee/` = modello, tappe, ca
 - La competenza linguistica e specialistica del personaggio è simulata ed è limitata dalle reali capacità del modello scelto.
 - Modificare un messaggio non rielabora le memorie già estratte da quel messaggio.
 - **Costruzione McKee**: i contenuti di McKee sono tradotti solo in italiano e inglese (in fr/es/de/pt appaiono in inglese). La costruzione è unica per l'identità: un personaggio presente in più storie ha la stessa orbita e le stesse relazioni in tutte (la storia di riferimento si sceglie nel costruttore). La qualità delle proposte del coach dipende dalla capacità del modello di produrre JSON valido; le proposte non valide vengono scartate e segnalate. Il coach, l'assistente di costruzione e la distillazione sono verificati con il provider mock, non con un modello reale: con modelli piccoli l'assistente può raccogliere meno campi per risposta o ripetere domande. La ricerca nel libro è lessicale (BM25) e funziona con gli EPUB non cifrati (DRM non supportato).
+- **Sincronizzazione**: verificata con cartelle locali che simulano il servizio cloud (più dispositivi, cifratura, conflitti, file in ritardo), non con i client reali di Google Drive, Dropbox o OneDrive. La risoluzione dei conflitti è per riga (vince la modifica più recente), non per campo.
 - Le conversazioni del laboratorio appartengono al personaggio, non al progetto: un personaggio condiviso tra più storie ha un'unica identità, un'unica memoria personale e le stesse conversazioni di laboratorio in tutte. Solo scenari, sessioni, simulazioni e memorie contestuali sono separati per progetto.
 
 ## Crediti

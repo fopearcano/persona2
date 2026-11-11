@@ -146,6 +146,9 @@ export const ERROR_CODES = [
   'invalid_pdf',
   'embeddings_unsupported',
   'invalid_book',
+  'sync_not_configured',
+  'sync_folder',
+  'sync_passphrase',
   'internal',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

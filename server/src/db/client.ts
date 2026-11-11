@@ -5,6 +5,7 @@ import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { MIGRATIONS_DIR } from '../config.js';
 import * as schema from './schema.js';
+import { installSyncTriggers } from './sync-triggers.js';
 
 export type Db = BetterSQLite3Database<typeof schema>;
 export type Sqlite = Database.Database;
@@ -24,6 +25,8 @@ function open(file: string, migrationsFolder: string): Handle {
   sqlite.pragma('busy_timeout = 5000');
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder });
+  // Tracciamento delle modifiche per la sincronizzazione tra dispositivi (sempre attivo).
+  installSyncTriggers(sqlite);
   return { sqlite, db };
 }
 

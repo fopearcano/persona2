@@ -9,7 +9,7 @@
  * Timestamp: stringhe ISO-8601 UTC. Id: UUID v4 testuali.
  */
 import { sql } from 'drizzle-orm';
-import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 const createdAt = () => text('created_at').notNull();
 const updatedAt = () => text('updated_at').notNull();
@@ -530,5 +530,88 @@ export const coachMessages = sqliteTable(
     status: text('status').notNull().default('complete'),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex('coach_messages_thread_seq_idx').on(t.threadId, t.seq)],
+  // Non univoco (dalla 0006): due dispositivi possono continuare lo stesso filo senza
+  // sincronizzarsi; i messaggi con lo stesso seq si ordinano per data di creazione.
+  (t) => [index('coach_messages_thread_seq_idx').on(t.threadId, t.seq)],
+);
+
+/* ------------------------------------------------------------------ */
+/* Sincronizzazione tra dispositivi (cartella cloud)                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Stato della sincronizzazione di questo database (una sola riga, id = 1). Le tabelle sync_*
+ * non vengono mai sincronizzate. I trigger di tracciamento (db/sync-triggers.ts) leggono
+ * `applying` e `device_id`.
+ */
+export const syncMeta = sqliteTable('sync_meta', {
+  id: integer('id').primaryKey(),
+  /** Identità di questo dispositivo nella cartella condivisa (devices/<deviceId>/). */
+  deviceId: text('device_id').notNull(),
+  deviceName: text('device_name'),
+  /** Impronta di computer + percorso del database: se cambia (database copiato) il dispositivo prende un nuovo id. */
+  boundTo: text('bound_to'),
+  /** 1 mentre si applicano modifiche ricevute: i trigger non le registrano come locali. */
+  applying: integer('applying').notNull().default(0),
+  folder: text('folder'),
+  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  intervalMinutes: integer('interval_minutes').notNull().default(5),
+  /** syncId della cartella a cui il dispositivo è collegato (persona-sync.json). */
+  syncSetId: text('sync_set_id'),
+  /** Chiave derivata dalla passphrase (base64). Resta sul dispositivo; mai restituita dalle API. */
+  encryptionKey: text('encryption_key'),
+  /** Ultimo segmento scritto da questo dispositivo. */
+  lastSeq: integer('last_seq').notNull().default(0),
+  lastSyncAt: text('last_sync_at'),
+  /** JSON { code, message } | null */
+  lastError: text('last_error'),
+  /** JSON SyncRunResult | null */
+  lastResult: text('last_result'),
+  /** Ultima volta in cui sono arrivate modifiche da altri dispositivi. */
+  lastImportAt: text('last_import_at'),
+});
+
+/**
+ * Versione di ogni riga sincronizzabile: `at` (millisecondi, orologio ibrido) e `dev` decidono
+ * quale modifica prevale (l'ultima). `dirty` = modifica locale non ancora inviata; `deleted` = lapide.
+ */
+export const syncRowVersions = sqliteTable(
+  'sync_row_versions',
+  {
+    tbl: text('tbl').notNull(),
+    rowId: text('row_id').notNull(),
+    at: integer('at').notNull(),
+    dev: text('dev').notNull(),
+    dirty: integer('dirty').notNull().default(1),
+    deleted: integer('deleted').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.tbl, t.rowId] }), index('sync_row_versions_dirty_idx').on(t.dirty)],
+);
+
+/** Altri dispositivi visti nella cartella condivisa e fin dove sono state applicate le loro modifiche. */
+export const syncPeers = sqliteTable('sync_peers', {
+  deviceId: text('device_id').primaryKey(),
+  name: text('name'),
+  appVersion: text('app_version'),
+  /** Ultimo segmento applicato. */
+  appliedSeq: integer('applied_seq').notNull().default(0),
+  /** Ultimo segmento pubblicato dal dispositivo (dal suo device.json). */
+  lastSeq: integer('last_seq').notNull().default(0),
+  lastSeenAt: text('last_seen_at'),
+  /** null | newer_version | gap | unreadable */
+  blocked: text('blocked'),
+});
+
+/** Modifiche ricevute in attesa di una riga a cui fanno riferimento (es. scenario prima del progetto). */
+export const syncPending = sqliteTable(
+  'sync_pending',
+  {
+    tbl: text('tbl').notNull(),
+    rowId: text('row_id').notNull(),
+    at: integer('at').notNull(),
+    dev: text('dev').notNull(),
+    /** JSON delle colonne */
+    data: text('data').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.tbl, t.rowId] })],
 );

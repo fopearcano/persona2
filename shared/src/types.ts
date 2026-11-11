@@ -759,3 +759,78 @@ export type CoachStreamEvent =
   | { type: 'reasoning'; text: string }
   | { type: 'done'; message: CoachMessage }
   | { type: 'error'; error: { code: ErrorCode; message: string }; message: CoachMessage | null };
+
+/* ------------------------------------------------------------------ */
+/* Sincronizzazione tra dispositivi                                    */
+/* ------------------------------------------------------------------ */
+
+/** Perché le modifiche di un dispositivo non possono (ancora) essere applicate. */
+export type SyncPeerBlock = 'newer_version' | 'gap' | 'unreadable';
+
+export interface SyncDevice {
+  id: string;
+  name: string;
+  /** È questo dispositivo. */
+  self: boolean;
+  appVersion: string | null;
+  /** Ultimo blocco di modifiche pubblicato. */
+  lastSeq: number;
+  /** Ultimo blocco applicato su questo dispositivo (per sé: ultimo scritto). */
+  appliedSeq: number;
+  lastSeenAt: string | null;
+  blocked: SyncPeerBlock | null;
+}
+
+export interface SyncRunResult {
+  at: string;
+  durationMs: number;
+  /** Righe inviate (modifiche ed eliminazioni). */
+  sent: number;
+  /** Righe ricevute e applicate. */
+  received: number;
+  /** Righe ricevute in attesa di dati collegati non ancora arrivati. */
+  pending: number;
+  /** Righe già nuove su questo dispositivo, o modificate più di recente qui. */
+  skipped: number;
+  /** Questo dispositivo era vuoto: ha adottato i dati condivisi al posto delle configurazioni iniziali. */
+  adopted: boolean;
+  /** Il database era stato copiato da un altro dispositivo: ha preso una nuova identità. */
+  forked: boolean;
+  /** Blocchi di modifiche compattati in un'istantanea completa. */
+  compacted: boolean;
+}
+
+export interface SyncStatus {
+  /** Cartella impostata. */
+  configured: boolean;
+  /** Sincronizzazione automatica attiva. */
+  enabled: boolean;
+  folder: string | null;
+  deviceId: string;
+  deviceName: string;
+  /** 0 = solo manuale. */
+  intervalMinutes: number;
+  /** La cartella condivisa è cifrata con una passphrase. */
+  encrypted: boolean;
+  running: boolean;
+  lastSyncAt: string | null;
+  lastError: { code: ErrorCode; message: string } | null;
+  lastResult: SyncRunResult | null;
+  /** Ultima volta in cui sono arrivate modifiche da altri dispositivi. */
+  lastImportAt: string | null;
+  /** Modifiche locali non ancora inviate. */
+  unsent: number;
+  /** Modifiche ricevute in attesa di dati collegati. */
+  pending: number;
+  devices: SyncDevice[];
+}
+
+export interface SyncFolderSuggestion {
+  /** google-drive | dropbox | onedrive | icloud | nextcloud | syncthing */
+  provider: string;
+  label: string;
+  /** Cartella del servizio cloud rilevata. */
+  root: string;
+  /** Cartella proposta per PERSONA (dentro la precedente). */
+  path: string;
+}

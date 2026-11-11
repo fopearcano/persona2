@@ -455,7 +455,7 @@ export function listThreads(ctx: AppContext, characterId: string, mode?: string)
 }
 
 function threadMessages(ctx: AppContext, threadId: string): MessageRow[] {
-  return ctx.dbm.db.select().from(coachMessages).where(eq(coachMessages.threadId, threadId)).orderBy(asc(coachMessages.seq)).all();
+  return ctx.dbm.db.select().from(coachMessages).where(eq(coachMessages.threadId, threadId)).orderBy(asc(coachMessages.seq), asc(coachMessages.createdAt)).all();
 }
 
 export function getThread(ctx: AppContext, id: string): CoachThreadDetail {

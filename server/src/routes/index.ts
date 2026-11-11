@@ -32,6 +32,8 @@ import * as scenarios from '../services/scenarios.js';
 import * as book from '../services/book.js';
 import * as coach from '../services/coach.js';
 import * as mckee from '../services/mckee.js';
+import * as sync from '../services/sync/index.js';
+import { detectSyncFolders } from '../services/sync/folders.js';
 import type { CoachStreamEvent } from '@persona/shared';
 
 type Params = { id: string };
@@ -430,9 +432,21 @@ export async function registerRoutes(app: FastifyInstance, ctx: AppContext) {
     portability.deleteBackup(ctx, req.params.name);
     return reply.code(204).send();
   });
-  app.post<{ Params: { name: string } }>('/api/backups/:name/restore', async (req) => portability.restoreFromStored(ctx, req.params.name));
+  app.post<{ Params: { name: string } }>('/api/backups/:name/restore', async (req) =>
+    sync.pauseForRestore(ctx, () => portability.restoreFromStored(ctx, req.params.name)),
+  );
   app.post('/api/restore', async (req) => {
     if (!Buffer.isBuffer(req.body)) throw new AppError('invalid_backup', 'Inviare il file del database come application/octet-stream');
-    return portability.restoreFromBuffer(ctx, req.body);
+    const body = req.body;
+    return sync.pauseForRestore(ctx, () => portability.restoreFromBuffer(ctx, body));
   });
+
+  /* ---------------- Sincronizzazione tra dispositivi ---------------- */
+  app.get('/api/sync', async () => sync.getSyncStatus(ctx));
+  app.put('/api/sync', async (req) => sync.updateSyncConfig(ctx, req.body as never));
+  app.post('/api/sync/run', async () => {
+    await sync.runSync(ctx);
+    return sync.getSyncStatus(ctx);
+  });
+  app.get('/api/sync/folders', async () => detectSyncFolders());
 }

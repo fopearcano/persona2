@@ -29,6 +29,7 @@ import { useActiveProject, useRemoveFromProject } from '../lib/project';
 import { useUi } from '../stores/ui';
 import { Portrait } from './CharactersPage';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUnsavedChanges } from '../lib/sync';
 
 type TabId = 'identity' | 'psychology' | 'communication' | 'expertise' | 'languages' | 'knowledge' | 'model' | 'history';
 type Draft = CharacterSnapshot;
@@ -125,6 +126,7 @@ export function CharacterEditorPage() {
   }, [character]);
 
   const dirty = norm(draft) !== norm(original);
+  useUnsavedChanges(dirty);
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();

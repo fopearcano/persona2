@@ -94,7 +94,8 @@ Gestione dei turni (`services/turns.ts`, `conversations.turn_mode`):
 ## Sicurezza e privacy
 
 - Server su `127.0.0.1`; controllo dell'intestazione `Host` (anti DNS rebinding) e dell'`Origin` sulle richieste di scrittura; parser `text/plain` disabilitato.
-- Chiavi API solo sul backend (`hasApiKey` nelle risposte).
+- Chiavi API solo sul backend (`hasApiKey` nelle risposte); mai nei file di sincronizzazione, come la chiave di cifratura della cartella.
+- Sincronizzazione facoltativa e senza servizi di PERSONA: i file vanno solo nella cartella scelta dall'autore, cifrati se è stata impostata una passphrase.
 - Contenuti recuperati racchiusi in blocchi `<data>` con delimitatori neutralizzati; le istruzioni applicative dichiarano esplicitamente di non seguire istruzioni contenute nei dati.
 
 ## Costruzione McKee (PERSONA 2)
@@ -126,6 +127,30 @@ Integrazione di CharBuild (fopearcano/char-build): il modulo `shared/src/mckee/`
 - **Release**: `.github/workflows/release.yml` (tag `vX.Y.Z` o avvio manuale) esegue `npm run check`, costruisce gli installer Windows e Linux sui runner di GitHub (passi comuni nel workflow riutilizzabile `build-installer.yml`), avvia ogni app impacchettata in modalità smoke test e pubblica la GitHub Release con le note di `docs/releases/vX.Y.Z.md` e `SHA256SUMS.txt`. L'installer macOS Intel è costruito su un runner self-hosted (`self-hosted`, `macOS`, `X64`) in un job separato e aggiunto poi alla release (con `SHA256SUMS.txt` aggiornato), così un Mac non disponibile non blocca gli altri sistemi. Gli archivi di Electron sono scaricati da `desktop/fetch-electron.mjs` con tentativi ripetuti e verifica SHA-256, e i download restano in cache tra le esecuzioni.
 - Il frontend usa percorsi relativi `/api` e funziona servito dal backend stesso.
 - Nessuna dipendenza da servizi cloud.
+
+## Sincronizzazione tra dispositivi
+
+Local-first anche con più computer: nessun server né account. PERSONA scrive in una cartella che un client cloud del sistema (Google Drive per desktop, Dropbox, OneDrive, iCloud Drive, Nextcloud, Syncthing) replica sugli altri computer. Codice in `server/src/services/sync/` (`format.ts` file e cifratura, `merge.ts` unione, `index.ts` giri e pianificazione, `folders.ts` rilevamento delle cartelle) e `server/src/db/sync-triggers.ts`.
+
+**Tracciamento.** Ogni tabella sincronizzabile (`SYNC_TABLES`) ha trigger creati all'apertura del database (ricreati se lo schema cambia) che, per ogni inserimento, modifica o eliminazione locale, scrivono in `sync_row_versions` la versione della riga: `at` in millisecondi, sempre maggiore della versione precedente (orologio ibrido: una modifica locale prevale sempre sulla versione da cui parte), `dev` = id del dispositivo, `dirty = 1`. Le eliminazioni a cascata generano lapidi. I trigger di modifica sono `AFTER UPDATE OF <colonne sincronizzate>`: embedding, statistiche di recupero, chiave API e configurazione predefinita non sono modifiche da inviare. Le tabelle escluse (`NOT_SYNCED`: preferenze, stato della sincronizzazione) e le nuove tabelle sono verificate da un test.
+
+**Formato della cartella.**
+
+```
+persona-sync.json                    { format: "persona.sync", version: 1, syncId, createdAt, encryption: null | { cipher: "aes-256-gcm", kdf: "scrypt", salt, N, r, p, check } }
+devices/<deviceId>/device.json       { device, name, lastSeq, updatedAt, schema, appVersion }
+devices/<deviceId>/0000000001.pseg   blocco: JSON compresso (gzip), cifrato se la cartella lo è ("PSE1" | iv | tag | dati)
+```
+
+Un blocco contiene `{ device, seq, schema, appVersion, snapshot, records: [{ t, id, at, dev, d? | del: 1 }] }`, con le sole colonne sincronizzate. Ogni dispositivo scrive solo nella propria sottocartella (il client cloud non deve mai unire due versioni dello stesso file) e con nomi temporanei poi rinominati. Il database SQLite non entra mai nella cartella. La chiave derivata dalla passphrase resta in `sync_meta` del dispositivo; il controllo `check` verifica la passphrase senza conservarla.
+
+**Un giro** (`runSync`, uno alla volta): (1) legge i blocchi nuovi di ogni altro dispositivo, in ordine, fermandosi a un buco (file non ancora scaricato), a un file illeggibile o a uno schema più recente del proprio (il dispositivo resta *in attesa*: niente va perso); legge anche i propri blocchi sconosciuti al database (dopo un ripristino o un'interruzione); (2) applica tutto in un'unica transazione con `sync_meta.applying = 1` (i trigger non le registrano come modifiche locali); (3) scrive le righe `dirty` in nuovi blocchi propri (~4 MB l'uno) e le segna inviate solo se nel frattempo non sono cambiate; (4) oltre i 100 blocchi propri scrive un'istantanea completa (righe e lapidi, primo blocco con `snapshot: true`) ed elimina i blocchi precedenti: un dispositivo indietro salta direttamente all'istantanea; (5) aggiorna `device.json` solo se qualcosa è cambiato. Pianificazione: all'avvio (dopo 10 s), ogni `intervalMinutes` (0 = solo manuale) e alla chiusura (al massimo 8 s); il ripristino di un backup attende il giro in corso.
+
+**Unione** (`applyRecords`): per ogni riga vince la versione maggiore (`at`, poi `dev`), quindi l'ordine di arrivo non conta e i dispositivi convergono. Gli aggiornamenti sono `UPDATE` delle sole colonne ricevute (mai `INSERT OR REPLACE`, che cancellerebbe a cascata i figli); le colonne locali restano, gli embedding si azzerano se il contenuto cambia. Riferimenti: se la riga collegata manca ma ha una lapide, prevale l'eliminazione (o il riferimento si azzera per `ON DELETE SET NULL`); se non è ancora arrivata la riga va in `sync_pending` e si riprova ai giri successivi (più passaggi nello stesso giro per le dipendenze tra blocchi). Vincoli univoci oltre all'id (personaggio-progetto, partecipanti): resta ovunque la riga con l'id minore. Dalla migrazione `0006_sync` i messaggi del coach non hanno più un `seq` univoco (due dispositivi possono continuare lo stesso filo).
+
+**Identità del dispositivo.** `sync_meta.device_id` nasce con la migrazione; `bound_to` è l'impronta di nome del computer + percorso del database. Se cambia (database copiato o spostato) il dispositivo prende un nuovo id e il vecchio diventa un «altro dispositivo» già letto fino all'ultimo blocco scritto. Un'installazione nuova (solo configurazioni iniziali mai modificate e un progetto vuoto) che si collega a una cartella con dati scarta le proprie configurazioni iniziali invece di duplicarle (`adopted`); la configurazione predefinita del motore è per dispositivo e, se manca, diventa la più vecchia. Cambiare cartella (un altro `syncId`) segna tutto da inviare di nuovo.
+
+**Interfaccia.** Impostazioni → *Sincronizzazione tra dispositivi* (`components/sync/SyncCard.tsx`) e indicatore nel pannello laterale (`SyncIndicator`). `useSyncRefresh` ricarica i dati quando cambia `lastImportAt`, ma solo quando nessun editor ha modifiche non salvate (`useUnsavedChanges` in costruzione, identità, storia e scenari): le bozze non vengono mai sostituite da dati arrivati in background.
 
 ## Base di conoscenza
 

@@ -12,6 +12,7 @@ import { Badge, Button, Card, Checkbox, EmptyState, ErrorBox, Field, IconButton,
 import { formatRelative } from '../lib/format';
 import { useActiveProject } from '../lib/project';
 import { useUi } from '../stores/ui';
+import { useUnsavedChanges } from '../lib/sync';
 
 type TabId = 'details' | 'participants' | 'events' | 'sessions' | 'memories';
 type DetailsDraft = Omit<ScenarioInput, 'status'> & { status: Scenario['status'] };
@@ -138,6 +139,7 @@ function DetailsTab({ scenario, onSaved }: { scenario: ScenarioDetail; onSaved()
   const [error, setError] = useState<unknown>(null);
   useEffect(() => setDraft(toDraft(scenario)), [scenario]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(scenario));
+  useUnsavedChanges(dirty);
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

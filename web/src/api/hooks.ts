@@ -18,6 +18,7 @@ import type {
   ProjectSummary,
   ScenarioDetail,
   ScenarioSummary,
+  SyncStatus,
 } from '@persona/shared/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
@@ -43,6 +44,7 @@ export const qk = {
   book: ['book'] as const,
   coachThreads: (characterId: string) => ['character', characterId, 'coach'] as const,
   coachThread: (id: string) => ['coach', id] as const,
+  sync: ['sync'] as const,
 };
 
 const qs = (params: Record<string, string | undefined>) => {
@@ -121,6 +123,14 @@ export const useBuildContext = (id: string | undefined, projectId?: string | nul
 
 export const useProjectCast = (projectId: string | null | undefined) =>
   useQuery({ queryKey: qk.projectCast(projectId ?? ''), queryFn: () => api.get<CastMember[]>(`/api/projects/${projectId}/cast`), enabled: !!projectId });
+
+/** Stato della sincronizzazione: aggiornato spesso solo mentre è attiva. */
+export const useSyncStatus = () =>
+  useQuery({
+    queryKey: qk.sync,
+    queryFn: () => api.get<SyncStatus>('/api/sync'),
+    refetchInterval: (q) => (!q.state.data?.enabled ? false : q.state.data.running ? 2000 : 15_000),
+  });
 
 export const useBook = () => useQuery({ queryKey: qk.book, queryFn: () => api.get<BookStatus>('/api/book') });
 

@@ -10,6 +10,7 @@ import { AppError } from './lib/util.js';
 import { registerRoutes } from './routes/index.js';
 import { seedModelConfigs } from './services/model-configs.js';
 import { ensureDefaultProject } from './services/projects.js';
+import { startSyncScheduler, stopSyncScheduler } from './services/sync/index.js';
 
 export interface BuildOptions {
   config?: Partial<AppConfig>;
@@ -103,7 +104,12 @@ export async function buildApp(opts: BuildOptions = {}): Promise<{ app: FastifyI
     ensureDefaultProject(ctx);
   }
 
+  // Sincronizzazione tra dispositivi: verifica l'identità del dispositivo e pianifica i giri.
+  startSyncScheduler(ctx);
+
   app.addHook('onClose', async () => {
+    // Invia le ultime modifiche prima di chiudere il database (se la sincronizzazione è attiva).
+    await stopSyncScheduler(ctx);
     dbm.close();
   });
   return { app, ctx };

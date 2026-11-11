@@ -21,6 +21,7 @@ import { downloadText, slugify, toMcKee, useMckee } from '../lib/mckee';
 import { useActiveProject } from '../lib/project';
 import { useUi } from '../stores/ui';
 import { Portrait } from './CharactersPage';
+import { useUnsavedChanges } from '../lib/sync';
 
 export function StoryPage() {
   const { projectId: routeId } = useParams();
@@ -42,6 +43,7 @@ export function StoryPage() {
   useEffect(() => {
     setDraft(project ? normalizeStoryDesign(project.story) : null);
   }, [project]);
+  useUnsavedChanges(!!project && !!draft && JSON.stringify(draft) !== JSON.stringify(normalizeStoryDesign(project.story)));
 
   if (isLoading) return <Spinner />;
   if (!projects?.length) {

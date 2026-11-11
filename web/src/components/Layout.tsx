@@ -3,7 +3,9 @@ import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, useLocation } from 'react-router';
 import { useActiveProject } from '../lib/project';
+import { useSyncRefresh } from '../lib/sync';
 import { useUi } from '../stores/ui';
+import { SyncIndicator } from './sync/SyncIndicator';
 import { cx, IconButton, Select, Toasts } from './ui';
 
 const NAV = [
@@ -26,6 +28,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const navHidden = useUi((s) => s.navHidden);
   const toggleNav = useUi((s) => s.toggleNav);
+  // Ricarica i dati quando arrivano modifiche da altri dispositivi.
+  useSyncRefresh();
 
   // Ctrl+\ (⌘+\ su macOS) nasconde o mostra il pannello.
   useEffect(() => {
@@ -86,6 +90,7 @@ export function Layout({ children }: { children: ReactNode }) {
               </li>
             ))}
           </ul>
+          <SyncIndicator />
         </nav>
       )}
       <main id="main" className="min-w-0 flex-1 overflow-auto">

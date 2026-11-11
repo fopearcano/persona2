@@ -504,3 +504,19 @@ export const characterImportOptionsSchema = z.object({
   includeMemories: z.boolean().default(true),
   includeKnowledge: z.boolean().default(true),
 });
+
+/* ------------------------------------------------------------------ */
+/* Sincronizzazione                                                    */
+/* ------------------------------------------------------------------ */
+
+export const syncConfigSchema = z.object({
+  /** Cartella dentro un servizio cloud sincronizzato (null = scollega). */
+  folder: z.string().trim().min(1).max(1024).nullable().optional(),
+  deviceName: z.string().trim().min(1).max(80).optional(),
+  /** 0 = solo manuale. */
+  intervalMinutes: z.number().int().min(0).max(1440).optional(),
+  enabled: z.boolean().optional(),
+  /** Per creare una cartella cifrata o per collegarsi a una cartella cifrata. Mai salvata in chiaro. */
+  passphrase: z.string().min(8).max(256).optional(),
+});
+export type SyncConfigInput = z.input<typeof syncConfigSchema>;

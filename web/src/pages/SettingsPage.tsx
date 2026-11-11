@@ -28,6 +28,7 @@ import { Badge, Button, Card, Checkbox, ErrorBox, Field, IconButton, Input, Page
 import { ACCENT_PRESETS, DEFAULT_APPEARANCE, FONT_STACKS, accentBase, accentTokens } from '../lib/appearance';
 import { formatBytes, formatDateTime, languageLabel, nativeLanguageLabel } from '../lib/format';
 import { useUi } from '../stores/ui';
+import { SyncCard } from '../components/sync/SyncCard';
 
 function useSavePreferences() {
   const qc = useQueryClient();
@@ -61,6 +62,7 @@ export function SettingsPage() {
           <MemoryContextCard prefs={prefs} />
           <EmbeddingsCard prefs={prefs} />
           <McKeeBookCard />
+          <SyncCard />
           <BackupCard />
           <InfoCard />
         </div>

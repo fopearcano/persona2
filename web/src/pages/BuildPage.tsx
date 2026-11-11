@@ -44,6 +44,7 @@ import {
   type CaptureUndo,
   type IdentityDraft,
 } from '../lib/mckee';
+import { useUnsavedChanges } from '../lib/sync';
 import { useActiveProject } from '../lib/project';
 import { useUi } from '../stores/ui';
 import { Portrait } from './CharactersPage';
@@ -108,6 +109,7 @@ export function BuildPage() {
 
   const identityChanges = Object.fromEntries(Object.entries(identity).filter(([k, v]) => (v ?? '') !== (identityOriginal[k] ?? '')));
   const dirty = (!!draft && !!original && JSON.stringify(draft) !== JSON.stringify(original)) || Object.keys(identityChanges).length > 0;
+  useUnsavedChanges(dirty);
   useEffect(() => {
     if (!dirty) return;
     const h = (e: BeforeUnloadEvent) => e.preventDefault();
